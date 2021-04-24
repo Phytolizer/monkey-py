@@ -55,6 +55,17 @@ class Identifier(Expression):
     def string(self):
         return self.token_literal()
 
+class IntegerLiteral(Expression):
+    def __init__(self, token, value):
+        self.token = token
+        self.value = value
+    
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        return self.token_literal()
+
 class ReturnStatement(Statement):
     def __init__(self, token, return_value):
         self.token = token

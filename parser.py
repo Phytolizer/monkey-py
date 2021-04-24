@@ -24,6 +24,7 @@ class Parser:
         self.infix_parse_fns = {}
 
         self.register_prefix(TokenType.Ident, self.parse_identifier)
+        self.register_prefix(TokenType.Num, self.parse_integer_literal)
     
     def register_prefix(self, type, fn):
         self.prefix_parse_fns[type] = fn
@@ -120,6 +121,19 @@ class Parser:
 
     def parse_identifier(self):
         return ast.Identifier(self.cur_token, self.cur_token.literal)
+    
+    def parse_integer_literal(self):
+        token = self.cur_token
+
+        try:
+            value = int(self.cur_token.literal)
+        except ValueError:
+            self.errors.append(
+                f"could not parse '{self.cur_token.literal}' as integer"
+            )
+            return None
+        
+        return ast.IntegerLiteral(token, value)
 
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
@@ -193,6 +207,22 @@ class ParserTests(unittest.TestCase):
         self.assertIsInstance(ident, ast.Identifier)
         self.assertEqual(ident.value, "foobar")
         self.assertEqual(ident.token_literal(), "foobar")
+
+    def test_integer_literal_expression(self):
+        text = "5;"
+
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        literal = stmt.expression
+        self.assertIsInstance(literal, ast.IntegerLiteral)
+        self.assertEqual(literal.value, 5)
+        self.assertEqual(literal.token_literal(), "5")
 
 if __name__ == "__main__":
     from lexer import Lexer
