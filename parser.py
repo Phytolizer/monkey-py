@@ -343,6 +343,31 @@ class ParserTests(unittest.TestCase):
                 self.check_integer_literal(exp.left, tt[1])
                 self.assertEqual(exp.operator, tt[2])
                 self.check_integer_literal(exp.right, tt[3])
+    
+    def test_operator_precedence(self):
+        tests = (
+            ("-a * b", "((-a) * b)"),
+            ("!-a", "(!(-a))"),
+            ("a + b + c", "((a + b) + c)"),
+            ("a + b - c", "((a + b) - c)"),
+            ("a * b * c", "((a * b) * c)"),
+            ("a * b / c", "((a * b) / c)"),
+            ("a + b / c", "(a + (b / c))"),
+            ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+            ("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+            ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+            ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
+            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")
+        )
+
+        for i, tt in enumerate(tests):
+            with self.subTest(i=i):
+                l = Lexer(tt[0])
+                p = Parser(l)
+                program = p.parse_program()
+                self.check_parser_errors(p)
+                self.assertEqual(program.string(), tt[1])
 
 if __name__ == "__main__":
     from lexer import Lexer
