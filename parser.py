@@ -1,6 +1,16 @@
-import ast
+from enum import Enum, auto
 from tokens import Token, TokenType
+import ast
 import unittest
+
+class Precedence(Enum):
+    LOWEST = auto()
+    EQUALS = auto()
+    LESSGREATER = auto()
+    SUM = auto()
+    PRODUCT = auto()
+    PREFIX = auto()
+    CALL = auto()
 
 class Parser:
     def __init__(self, lexer):
@@ -10,6 +20,16 @@ class Parser:
         self.next_token()
         self.next_token()
         self.errors = []
+        self.prefix_parse_fns = {}
+        self.infix_parse_fns = {}
+
+        self.register_prefix(TokenType.Ident, self.parse_identifier)
+    
+    def register_prefix(self, type, fn):
+        self.prefix_parse_fns[type] = fn
+    
+    def register_infix(self, type, fn):
+        self.infix_parse_fns[type] = fn
 
     def peek_error(self, type):
         self.errors.append(
@@ -51,7 +71,7 @@ class Parser:
         elif self.cur_token.type == TokenType.Return:
             return self.parse_return_statement()
         else:
-            return None
+            return self.parse_expression_statement()
     
     def parse_let_statement(self):
         tok = self.cur_token
@@ -78,6 +98,28 @@ class Parser:
             self.next_token()
         
         return ast.ReturnStatement(token, None)
+    
+    def parse_expression_statement(self):
+        token = self.cur_token
+        expression = self.parse_expression(Precedence.LOWEST)
+
+        if self.peek_token_is(TokenType.Semicolon):
+            self.next_token()
+
+        return ast.ExpressionStatement(token, expression)
+    
+    def parse_expression(self, precedence):
+        try:
+            prefix = self.prefix_parse_fns[self.cur_token.type]
+        except KeyError:
+            return None
+
+        left_exp = prefix()
+
+        return left_exp
+
+    def parse_identifier(self):
+        return ast.Identifier(self.cur_token, self.cur_token.literal)
 
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
@@ -134,6 +176,23 @@ class ParserTests(unittest.TestCase):
             with self.subTest(i=i):
                 self.assertIsInstance(stmt, ast.ReturnStatement)
                 self.assertEqual(stmt.token_literal(), "return")
+    
+    def test_identifier_expression(self):
+        text = "foobar;"
+
+        l = Lexer(text)
+        p = Parser(l)
+
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)    
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        ident = stmt.expression
+        self.assertIsInstance(ident, ast.Identifier)
+        self.assertEqual(ident.value, "foobar")
+        self.assertEqual(ident.token_literal(), "foobar")
 
 if __name__ == "__main__":
     from lexer import Lexer

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import unittest
 
 class Node(ABC):
     @abstractmethod
@@ -26,7 +27,7 @@ class Program(Node):
             return ""
     
     def string(self):
-        return self.statements.join("")
+        return "".join(map(lambda s: s.string(), self.statements))
 
 class LetStatement(Statement):
     def __init__(self, token, name, value):
@@ -40,7 +41,7 @@ class LetStatement(Statement):
     def string(self):
         out = f"{self.token_literal()} {self.name.string()}"
         if self.value is not None:
-            out += f" {self.value.string()}"
+            out += f" = {self.value.string()}"
         return f"{out};"
 
 class Identifier(Expression):
@@ -64,3 +65,36 @@ class ReturnStatement(Statement):
     
     def string(self):
         return f"{self.token_literal()} {self.return_value};"
+    
+class ExpressionStatement(Statement):
+    def __init__(self, token, expression):
+        self.token = token
+        self.expression = expression
+
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        return self.expression.string()
+
+class AstTests(unittest.TestCase):
+    def test_string(self):
+        program = Program([
+            LetStatement(
+                Token(TokenType.Let, "let"),
+                Identifier(
+                    Token(TokenType.Ident, "myVar"),
+                    "myVar",
+                ),
+                Identifier(
+                    Token(TokenType.Ident, "anotherVar"),
+                    "anotherVar",
+                ),
+            )
+        ])
+
+        self.assertEqual(program.string(), "let myVar = anotherVar;")
+
+if __name__ == "__main__":
+    from tokens import Token, TokenType
+    unittest.main()
