@@ -1,9 +1,9 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
 from tokens import Token, TokenType
 import ast
 import unittest
 
-class Precedence(Enum):
+class Precedence(IntEnum):
     LOWEST = auto()
     EQUALS = auto()
     LESSGREATER = auto()
@@ -11,6 +11,17 @@ class Precedence(Enum):
     PRODUCT = auto()
     PREFIX = auto()
     CALL = auto()
+
+PRECEDENCES = {
+    TokenType.Eq: Precedence.EQUALS,
+    TokenType.NotEq: Precedence.EQUALS,
+    TokenType.Less: Precedence.LESSGREATER,
+    TokenType.Greater: Precedence.LESSGREATER,
+    TokenType.Plus: Precedence.SUM,
+    TokenType.Minus: Precedence.SUM,
+    TokenType.Star: Precedence.PRODUCT,
+    TokenType.Slash: Precedence.PRODUCT,
+}
 
 class Parser:
     def __init__(self, lexer):
@@ -27,6 +38,27 @@ class Parser:
         self.register_prefix(TokenType.Num, self.parse_integer_literal)
         self.register_prefix(TokenType.Bang, self.parse_prefix_expression)
         self.register_prefix(TokenType.Minus, self.parse_prefix_expression)
+        
+        self.register_infix(TokenType.Plus, self.parse_infix_expression)
+        self.register_infix(TokenType.Minus, self.parse_infix_expression)
+        self.register_infix(TokenType.Star, self.parse_infix_expression)
+        self.register_infix(TokenType.Slash, self.parse_infix_expression)
+        self.register_infix(TokenType.Eq, self.parse_infix_expression)
+        self.register_infix(TokenType.NotEq, self.parse_infix_expression)
+        self.register_infix(TokenType.Less, self.parse_infix_expression)
+        self.register_infix(TokenType.Greater, self.parse_infix_expression)
+    
+    def peek_precedence(self):
+        try:
+            return PRECEDENCES[self.peek_token.type]
+        except KeyError:
+            return Precedence.LOWEST
+    
+    def cur_precedence(self):
+        try:
+            return PRECEDENCES[self.cur_token.type]
+        except KeyError:
+            return Precedence.LOWEST
     
     def register_prefix(self, type, fn):
         self.prefix_parse_fns[type] = fn
@@ -125,7 +157,26 @@ class Parser:
 
         left_exp = prefix()
 
+        while not self.peek_token_is(TokenType.Semicolon) and precedence < self.peek_precedence():
+            try:
+                infix = self.infix_parse_fns[self.peek_token.type]
+            except KeyError:
+                return left_exp
+            
+            self.next_token()
+            left_exp = infix(left_exp)
+
         return left_exp
+    
+    def parse_infix_expression(self, left):
+        token = self.cur_token
+        operator = self.cur_token.literal
+
+        precedence = self.cur_precedence()
+        self.next_token()
+        right = self.parse_expression(precedence)
+
+        return ast.InfixExpression(token, left, operator, right)
 
     def parse_prefix_expression(self):
         token = self.cur_token
@@ -265,6 +316,33 @@ class ParserTests(unittest.TestCase):
                 self.assertIsInstance(exp, ast.PrefixExpression)
                 self.assertEqual(exp.operator, tt[1])
                 self.check_integer_literal(exp.right, tt[2])
+            
+    def test_infix_expressions(self):
+        infix_tests = (
+            ("5 + 5;", 5, "+", 5),
+            ("5 - 5;", 5, "-", 5),
+            ("5 * 5;", 5, "*", 5),
+            ("5 / 5;", 5, "/", 5),
+            ("5 > 5;", 5, ">", 5),
+            ("5 < 5;", 5, "<", 5),
+            ("5 == 5;", 5, "==", 5),
+            ("5 != 5;", 5, "!=", 5),
+        )
+        for i, tt in enumerate(infix_tests):
+            with self.subTest(i=i):
+                l = Lexer(tt[0])
+                p = Parser(l)
+                program = p.parse_program()
+                self.check_parser_errors(p)
+
+                self.assertEqual(len(program.statements), 1)
+                stmt = program.statements[0]
+                self.assertIsInstance(stmt, ast.ExpressionStatement)
+                exp = stmt.expression
+                self.assertIsInstance(exp, ast.InfixExpression)
+                self.check_integer_literal(exp.left, tt[1])
+                self.assertEqual(exp.operator, tt[2])
+                self.check_integer_literal(exp.right, tt[3])
 
 if __name__ == "__main__":
     from lexer import Lexer
