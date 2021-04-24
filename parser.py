@@ -38,6 +38,8 @@ class Parser:
         self.register_prefix(TokenType.Num, self.parse_integer_literal)
         self.register_prefix(TokenType.Bang, self.parse_prefix_expression)
         self.register_prefix(TokenType.Minus, self.parse_prefix_expression)
+        self.register_prefix(TokenType.TRUE, self.parse_boolean)
+        self.register_prefix(TokenType.FALSE, self.parse_boolean)
         
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -202,6 +204,9 @@ class Parser:
         
         return ast.IntegerLiteral(token, value)
     
+    def parse_boolean(self):
+        return ast.Boolean(self.cur_token, self.cur_token_is(TokenType.TRUE))
+    
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
         self.assertEqual(stmt.token_literal(), "let")
@@ -224,11 +229,18 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(exp.value, value)
         self.assertEqual(exp.token_literal(), value)
     
+    def check_boolean(self, exp, value):
+        self.assertIsInstance(exp, ast.Boolean)
+        self.assertEqual(exp.value, value)
+        self.assertEqual(exp.token_literal(), str(value))
+    
     def check_literal_expression(self, exp, expected):
         if isinstance(exp, int):
             self.check_integer_literal(exp, expected)
         elif isinstance(exp, str):
             self.check_identifier(exp, expected)
+        elif isinstance(exp, bool):
+            self.check_boolean(exp, expected)
     
     def check_infix_expression(self, exp, left, operator, right):
         self.assertIsInstance(exp, ast.InfixExpression)
@@ -307,10 +319,24 @@ class ParserTests(unittest.TestCase):
         self.assertIsInstance(stmt, ast.ExpressionStatement)
         self.check_literal_expression(stmt.expression, 5)
     
+    def test_boolean_expression(self):
+        text = "true;"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        self.check_literal_expression(stmt.expression, True)
+    
     def test_prefix_expressions(self):
         prefix_tests = (
             ("!5;", "!", 5),
             ("-15;", "-", 15),
+            ("!true;", "!", True),
+            ("!false;", "!", False),
         )
 
         for i, tt in enumerate(prefix_tests):
@@ -338,6 +364,9 @@ class ParserTests(unittest.TestCase):
             ("5 < 5;", 5, "<", 5),
             ("5 == 5;", 5, "==", 5),
             ("5 != 5;", 5, "!=", 5),
+            ("true == true", True, "==", True),
+            ("true != false", True, "!=", False),
+            ("false == false", False, "==", False),
         )
         for i, tt in enumerate(infix_tests):
             with self.subTest(i=i):
@@ -365,7 +394,11 @@ class ParserTests(unittest.TestCase):
             ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
             ("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
             ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
-            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")
+            ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+            ("true", "true"),
+            ("false", "false"),
+            ("3 > 5 == false", "((3 > 5) == false)"),
+            ("3 < 5 == true", "((3 < 5) == true)"),
         )
 
         for i, tt in enumerate(tests):
