@@ -40,6 +40,7 @@ class Parser:
         self.register_prefix(TokenType.Minus, self.parse_prefix_expression)
         self.register_prefix(TokenType.TRUE, self.parse_boolean)
         self.register_prefix(TokenType.FALSE, self.parse_boolean)
+        self.register_prefix(TokenType.LParen, self.parse_grouped_expression)
         
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -206,6 +207,13 @@ class Parser:
     
     def parse_boolean(self):
         return ast.Boolean(self.cur_token, self.cur_token_is(TokenType.TRUE))
+    
+    def parse_grouped_expression(self):
+        self.next_token()
+        exp = self.parse_expression(Precedence.LOWEST)
+        if not self.expect_peek(TokenType.RParen):
+            return None
+        return exp
     
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
@@ -399,6 +407,11 @@ class ParserTests(unittest.TestCase):
             ("false", "false"),
             ("3 > 5 == false", "((3 > 5) == false)"),
             ("3 < 5 == true", "((3 < 5) == true)"),
+            ("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"),
+            ("(5 + 5) * 2", "((5 + 5) * 2)"),
+            ("2 / (5 + 5)", "(2 / (5 + 5))"),
+            ("-(5 + 5)", "(-(5 + 5))"),
+            ("!(true == true)", "(!(true == true))"),
         )
 
         for i, tt in enumerate(tests):
