@@ -36,7 +36,7 @@ class TokenType(Enum):
     RBrace = auto()
 
 class Token:
-    def __init__(self, type, literal):
+    def __init__(self, type=TokenType.Illegal, literal=""):
         self.type = type
         self.literal = literal
 
