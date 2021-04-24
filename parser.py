@@ -25,6 +25,8 @@ class Parser:
 
         self.register_prefix(TokenType.Ident, self.parse_identifier)
         self.register_prefix(TokenType.Num, self.parse_integer_literal)
+        self.register_prefix(TokenType.Bang, self.parse_prefix_expression)
+        self.register_prefix(TokenType.Minus, self.parse_prefix_expression)
     
     def register_prefix(self, type, fn):
         self.prefix_parse_fns[type] = fn
@@ -35,6 +37,11 @@ class Parser:
     def peek_error(self, type):
         self.errors.append(
             f"expected next token to be {type}, got {self.peek_token.type} instead"
+        )
+    
+    def no_prefix_parse_fn_error(self, type):
+        self.errors.append(
+            f"no prefix parse fn for {type} found"
         )
     
     def next_token(self):
@@ -113,11 +120,20 @@ class Parser:
         try:
             prefix = self.prefix_parse_fns[self.cur_token.type]
         except KeyError:
+            self.no_prefix_parse_fn_error(self.cur_token.type)
             return None
 
         left_exp = prefix()
 
         return left_exp
+
+    def parse_prefix_expression(self):
+        token = self.cur_token
+        operator = self.cur_token.literal
+        self.next_token()
+        right = self.parse_expression(Precedence.PREFIX)
+
+        return ast.PrefixExpression(token, operator, right)
 
     def parse_identifier(self):
         return ast.Identifier(self.cur_token, self.cur_token.literal)
@@ -134,7 +150,7 @@ class Parser:
             return None
         
         return ast.IntegerLiteral(token, value)
-
+    
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
         self.assertEqual(stmt.token_literal(), "let")
@@ -146,6 +162,11 @@ class ParserTests(unittest.TestCase):
         for error in parser.errors:
             print(f"parser error: {error}")
         self.assertEqual(len(parser.errors), 0)
+    
+    def check_integer_literal(self, actual, expected):
+        self.assertIsInstance(actual, ast.IntegerLiteral)
+        self.assertEqual(actual.value, expected)
+        self.assertEqual(actual.token_literal(), str(expected))
 
     def test_let_statements(self):
         text = """
@@ -223,6 +244,27 @@ class ParserTests(unittest.TestCase):
         self.assertIsInstance(literal, ast.IntegerLiteral)
         self.assertEqual(literal.value, 5)
         self.assertEqual(literal.token_literal(), "5")
+    
+    def test_prefix_expressions(self):
+        prefix_tests = (
+            ("!5;", "!", 5),
+            ("-15;", "-", 15),
+        )
+
+        for i, tt in enumerate(prefix_tests):
+            with self.subTest(i=i):
+                l = Lexer(tt[0])
+                p = Parser(l)
+                program = p.parse_program()
+                self.check_parser_errors(p)
+
+                self.assertEqual(len(program.statements), 1)
+                stmt = program.statements[0]
+                self.assertIsInstance(stmt, ast.ExpressionStatement)
+                exp = stmt.expression
+                self.assertIsInstance(exp, ast.PrefixExpression)
+                self.assertEqual(exp.operator, tt[1])
+                self.check_integer_literal(exp.right, tt[2])
 
 if __name__ == "__main__":
     from lexer import Lexer
