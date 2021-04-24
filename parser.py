@@ -48,6 +48,8 @@ class Parser:
     def parse_statement(self):
         if self.cur_token.type == TokenType.Let:
             return self.parse_let_statement()
+        elif self.cur_token.type == TokenType.Return:
+            return self.parse_return_statement()
         else:
             return None
     
@@ -66,6 +68,16 @@ class Parser:
             self.next_token()
         
         return ast.LetStatement(tok, name, None)
+    
+    def parse_return_statement(self):
+        token = self.cur_token
+
+        self.next_token()
+
+        while not self.cur_token_is(TokenType.Semicolon):
+            self.next_token()
+        
+        return ast.ReturnStatement(token, None)
 
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
@@ -103,6 +115,25 @@ class ParserTests(unittest.TestCase):
             with self.subTest(i=i):
                 stmt = program.statements[i]
                 self.check_let_statement(stmt, tt)
+    
+    def test_return_statements(self):
+        text = """
+        return 5;
+        return 10;
+        return 993322;
+        """
+
+        l = Lexer(text)
+        p = Parser(l)
+
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 3)
+        for i, stmt in enumerate(program.statements):
+            with self.subTest(i=i):
+                self.assertIsInstance(stmt, ast.ReturnStatement)
+                self.assertEqual(stmt.token_literal(), "return")
 
 if __name__ == "__main__":
     from lexer import Lexer
