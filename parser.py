@@ -549,6 +549,26 @@ class ParserTests(unittest.TestCase):
         body_stmt = function.body.statements[0]
         self.assertIsInstance(body_stmt, ast.ExpressionStatement)
         self.check_infix_expression(body_stmt.expression, "x", "+", "y")
+    
+    def test_function_parameters_parsing(self):
+        tests = (
+            ("fn() {};", []),
+            ("fn(x) {};", ["x"]),
+            ("fn(x, y, z) {};", ["x", "y", "z"]),
+        )
+        for i, tt in enumerate(tests):
+            with self.subTest(i=i):
+                l = Lexer(tt[0])
+                p = Parser(l)
+                program = p.parse_program()
+                self.check_parser_errors(p)
+                stmt = program.statements[0]
+                self.assertIsInstance(stmt, ast.ExpressionStatement)
+                function = stmt.expression
+                self.assertIsInstance(function, ast.FunctionLiteral)
+                self.assertEqual(len(function.parameters), len(tt[1]))
+                for param, ident in zip(function.parameters, tt[1]):
+                    self.check_literal_expression(param, ident)
 
 if __name__ == "__main__":
     from lexer import Lexer
