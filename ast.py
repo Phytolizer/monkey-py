@@ -102,6 +102,19 @@ class InfixExpression(Expression):
     def string(self):
         return f"({self.left.string()} {self.operator} {self.right.string()})"
 
+class FunctionLiteral(Expression):
+    def __init__(self, token, parameters, body):
+        self.token = token
+        self.parameters = parameters
+        self.body = body
+    
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        params = ", ".join(map(lambda p: p.string(), self.parameters))
+        return f"{self.token_literal()}({params}) {self.body.string()}"
+
 class IfExpression(Expression):
     def __init__(self, token, condition, consequence, alternative):
         self.token = token

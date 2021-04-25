@@ -42,6 +42,7 @@ class Parser:
         self.register_prefix(TokenType.FALSE, self.parse_boolean)
         self.register_prefix(TokenType.LParen, self.parse_grouped_expression)
         self.register_prefix(TokenType.If, self.parse_if_expression)
+        self.register_prefix(TokenType.Fn, self.parse_function_literal)
         
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -171,6 +172,33 @@ class Parser:
             left_exp = infix(left_exp)
 
         return left_exp
+
+    def parse_function_literal(self):
+        token = self.cur_token
+        if not self.expect_peek(TokenType.LParen):
+            return None
+        parameters = self.parse_function_parameters()
+        if not self.expect_peek(TokenType.LBrace):
+            return None
+        body = self.parse_block_statement()
+        return ast.FunctionLiteral(token, parameters, body)
+    
+    def parse_function_parameters(self):
+        identifiers = []
+        if self.peek_token_is(TokenType.RParen):
+            self.next_token()
+            return identifiers
+        self.next_token()
+        ident = ast.Identifier(self.cur_token, self.cur_token.literal)
+        identifiers.append(ident)
+        while self.peek_token_is(TokenType.Comma):
+            self.next_token()
+            self.next_token()
+            ident = ast.Identifier(self.cur_token, self.cur_token.literal)
+            identifiers.append(ident)
+        if not self.expect_peek(TokenType.RParen):
+            return None
+        return identifiers
 
     def parse_if_expression(self):
         token = self.cur_token
@@ -501,6 +529,26 @@ class ParserTests(unittest.TestCase):
         alternative = exp.alternative.statements[0]
         self.assertIsInstance(alternative, ast.ExpressionStatement)
         self.check_identifier(alternative.expression, "y")
+    
+    def test_function_literal(self):
+        text = "fn(x, y) { x + y; }"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        function = stmt.expression
+        self.assertIsInstance(function, ast.FunctionLiteral)
+        self.assertEqual(len(function.parameters), 2)
+        self.check_literal_expression(function.parameters[0], "x")
+        self.check_literal_expression(function.parameters[1], "y")
+        self.assertEqual(len(function.body.statements), 1)
+        body_stmt = function.body.statements[0]
+        self.assertIsInstance(body_stmt, ast.ExpressionStatement)
+        self.check_infix_expression(body_stmt.expression, "x", "+", "y")
 
 if __name__ == "__main__":
     from lexer import Lexer
