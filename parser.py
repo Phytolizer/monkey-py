@@ -21,6 +21,7 @@ PRECEDENCES = {
     TokenType.Minus: Precedence.SUM,
     TokenType.Star: Precedence.PRODUCT,
     TokenType.Slash: Precedence.PRODUCT,
+    TokenType.LParen: Precedence.CALL,
 }
 
 class Parser:
@@ -52,6 +53,7 @@ class Parser:
         self.register_infix(TokenType.NotEq, self.parse_infix_expression)
         self.register_infix(TokenType.Less, self.parse_infix_expression)
         self.register_infix(TokenType.Greater, self.parse_infix_expression)
+        self.register_infix(TokenType.LParen, self.parse_call_expression)
     
     def peek_precedence(self):
         try:
@@ -172,6 +174,26 @@ class Parser:
             left_exp = infix(left_exp)
 
         return left_exp
+
+    def parse_call_expression(self, function):
+        token = self.cur_token
+        arguments = self.parse_call_arguments()
+        return ast.CallExpression(token, function, arguments)
+    
+    def parse_call_arguments(self):
+        args = []
+        if self.peek_token_is(TokenType.RParen):
+            self.next_token()
+            return args
+        self.next_token()
+        args.append(self.parse_expression(Precedence.LOWEST))
+        while self.peek_token_is(TokenType.Comma):
+            self.next_token()
+            self.next_token()
+            args.append(self.parse_expression(Precedence.LOWEST))
+        if not self.expect_peek(TokenType.RParen):
+            return None
+        return args
 
     def parse_function_literal(self):
         token = self.cur_token
@@ -478,6 +500,9 @@ class ParserTests(unittest.TestCase):
             ("2 / (5 + 5)", "(2 / (5 + 5))"),
             ("-(5 + 5)", "(-(5 + 5))"),
             ("!(true == true)", "(!(true == true))"),
+            ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+            ("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+            ("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
         )
 
         for i, tt in enumerate(tests):
@@ -550,7 +575,7 @@ class ParserTests(unittest.TestCase):
         self.assertIsInstance(body_stmt, ast.ExpressionStatement)
         self.check_infix_expression(body_stmt.expression, "x", "+", "y")
     
-    def test_function_parameters_parsing(self):
+    def test_function_parameters(self):
         tests = (
             ("fn() {};", []),
             ("fn(x) {};", ["x"]),
@@ -562,6 +587,7 @@ class ParserTests(unittest.TestCase):
                 p = Parser(l)
                 program = p.parse_program()
                 self.check_parser_errors(p)
+                self.assertEqual(len(program.statements), 1)
                 stmt = program.statements[0]
                 self.assertIsInstance(stmt, ast.ExpressionStatement)
                 function = stmt.expression
@@ -569,6 +595,23 @@ class ParserTests(unittest.TestCase):
                 self.assertEqual(len(function.parameters), len(tt[1]))
                 for param, ident in zip(function.parameters, tt[1]):
                     self.check_literal_expression(param, ident)
+    
+    def test_call_expression(self):
+        text = "add(1, 2 * 3, 4 + 5)"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        exp = stmt.expression
+        self.assertIsInstance(exp, ast.CallExpression)
+        self.check_identifier(exp.function, "add")
+        self.assertEqual(len(exp.arguments), 3)
+        self.check_literal_expression(exp.arguments[0], 1)
+        self.check_infix_expression(exp.arguments[1], 2, "*", 3)
+        self.check_infix_expression(exp.arguments[2], 4, "+", 5)
 
 if __name__ == "__main__":
     from lexer import Lexer

@@ -131,6 +131,19 @@ class IfExpression(Expression):
             out += f" else {self.alternative.string()}"
         return out
 
+class CallExpression(Expression):
+    def __init__(self, token, function, arguments):
+        self.token = token
+        self.function = function
+        self.arguments = arguments
+    
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        args = ", ".join(map(lambda a: a.string(), self.arguments))
+        return f"{self.function.string()}({args})"
+
 class ReturnStatement(Statement):
     def __init__(self, token, return_value):
         self.token = token
