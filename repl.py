@@ -1,5 +1,10 @@
 from lexer import Lexer
+from parser import Parser
 from tokens import TokenType
+
+def print_parser_errors(errs):
+    for err in errs:
+        print(f"parser error: {err}")
 
 if __name__ == "__main__":
     while True:
@@ -10,9 +15,9 @@ if __name__ == "__main__":
             break
 
         l = Lexer(line)
-
-        while True:
-            tok = l.next_token()
-            if tok.type == TokenType.Eof:
-                break
-            print(f"{{Type:{tok.type} Literal:{tok.literal}}}")
+        p = Parser(l)
+        program = p.parse_program()
+        if len(p.errors) > 0:
+            print_parser_errors(p.errors)
+            continue
+        print(program.string())
