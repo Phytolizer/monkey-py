@@ -131,20 +131,23 @@ class Parser:
         if not self.expect_peek(TokenType.Assign):
             return None
         
-        while not self.cur_token_is(TokenType.Semicolon):
+        self.next_token()
+        value = self.parse_expression(Precedence.LOWEST)
+        if self.peek_token_is(TokenType.Semicolon):
             self.next_token()
         
-        return ast.LetStatement(tok, name, None)
+        return ast.LetStatement(tok, name, value)
     
     def parse_return_statement(self):
         token = self.cur_token
 
         self.next_token()
 
-        while not self.cur_token_is(TokenType.Semicolon):
+        return_value = self.parse_expression(Precedence.LOWEST)
+        if self.peek_token_is(TokenType.Semicolon):
             self.next_token()
         
-        return ast.ReturnStatement(token, None)
+        return ast.ReturnStatement(token, return_value)
     
     def parse_expression_statement(self):
         token = self.cur_token
@@ -347,8 +350,8 @@ class ParserTests(unittest.TestCase):
     def test_let_statements(self):
         text = """
         let x = 5;
-        let y = 10;
-        let foobar = 838383;
+        let y = true;
+        let foobar = y;
         """
 
         l = Lexer(text)
@@ -359,15 +362,16 @@ class ParserTests(unittest.TestCase):
         self.assertIsNotNone(program)
         self.assertEqual(len(program.statements), 3)
         tests = (
-            ("x"),
-            ("y"),
-            ("foobar"),
+            ("x", 5),
+            ("y", True),
+            ("foobar", "y"),
         )
 
         for i, tt in enumerate(tests):
             with self.subTest(i=i):
                 stmt = program.statements[i]
-                self.check_let_statement(stmt, tt)
+                self.check_let_statement(stmt, tt[0])
+                self.check_literal_expression(stmt.value, tt[1])
     
     def test_return_statements(self):
         text = """
