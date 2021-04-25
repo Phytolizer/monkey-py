@@ -1,6 +1,7 @@
 from lexer import Lexer
 from parser import Parser
 from tokens import TokenType
+import evaluator
 
 def print_parser_errors(errs):
     for err in errs:
@@ -20,4 +21,7 @@ if __name__ == "__main__":
         if len(p.errors) > 0:
             print_parser_errors(p.errors)
             continue
-        print(program.string())
+        evaluated = evaluator.eval_node(program)
+        if evaluated is not None:
+            print(evaluated.inspect())
+
