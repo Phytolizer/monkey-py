@@ -41,6 +41,7 @@ class Parser:
         self.register_prefix(TokenType.TRUE, self.parse_boolean)
         self.register_prefix(TokenType.FALSE, self.parse_boolean)
         self.register_prefix(TokenType.LParen, self.parse_grouped_expression)
+        self.register_prefix(TokenType.If, self.parse_if_expression)
         
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -170,6 +171,43 @@ class Parser:
             left_exp = infix(left_exp)
 
         return left_exp
+
+    def parse_if_expression(self):
+        token = self.cur_token
+
+        if not self.expect_peek(TokenType.LParen):
+            return None
+        self.next_token()
+        condition = self.parse_expression(Precedence.LOWEST)
+
+        if not self.expect_peek(TokenType.RParen):
+            return None
+        if not self.expect_peek(TokenType.LBrace):
+            return None
+        
+        consequence = self.parse_block_statement()
+
+        alternative = None
+        if self.peek_token_is(TokenType.Else):
+            self.next_token()
+
+            if not self.expect_peek(TokenType.LBrace):
+                return Nont
+            alternative = self.parse_block_statement()
+
+        return ast.IfExpression(token, condition, consequence, alternative)
+    
+    def parse_block_statement(self):
+        token = self.cur_token
+        statements = []
+        self.next_token()
+
+        while not self.cur_token_is(TokenType.RBrace) and not self.cur_token_is(TokenType.Eof):
+            stmt = self.parse_statement()
+            if stmt is not None:
+                statements.append(stmt)
+            self.next_token()
+        return ast.BlockStatement(token, statements)
     
     def parse_infix_expression(self, left):
         token = self.cur_token
@@ -421,6 +459,48 @@ class ParserTests(unittest.TestCase):
                 program = p.parse_program()
                 self.check_parser_errors(p)
                 self.assertEqual(program.string(), tt[1])
+    
+    def test_if_expression(self):
+        text = "if (x < y) { x }"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        exp = stmt.expression
+        self.assertIsInstance(exp, ast.IfExpression)
+        self.check_infix_expression(exp.condition, "x", "<", "y")
+        self.assertEqual(len(exp.consequence.statements), 1)
+        consequence = exp.consequence.statements[0]
+        self.assertIsInstance(consequence, ast.ExpressionStatement)
+        self.check_identifier(consequence.expression, "x")
+        self.assertIsNone(exp.alternative)
+    
+    def test_if_else_expression(self):
+        text = "if (x < y) { x } else { y }"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+
+        self.assertEqual(len(program.statements), 1)
+        stmt = program.statements[0]
+        self.assertIsInstance(stmt, ast.ExpressionStatement)
+        exp = stmt.expression
+        self.assertIsInstance(exp, ast.IfExpression)
+        self.check_infix_expression(exp.condition, "x", "<", "y")
+        self.assertEqual(len(exp.consequence.statements), 1)
+        consequence = exp.consequence.statements[0]
+        self.assertIsInstance(consequence, ast.ExpressionStatement)
+        self.check_identifier(consequence.expression, "x")
+        self.assertIsNotNone(exp.alternative)
+        self.assertEqual(len(exp.alternative.statements), 1)
+        alternative = exp.alternative.statements[0]
+        self.assertIsInstance(alternative, ast.ExpressionStatement)
+        self.check_identifier(alternative.expression, "y")
 
 if __name__ == "__main__":
     from lexer import Lexer

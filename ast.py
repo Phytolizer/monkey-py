@@ -102,6 +102,22 @@ class InfixExpression(Expression):
     def string(self):
         return f"({self.left.string()} {self.operator} {self.right.string()})"
 
+class IfExpression(Expression):
+    def __init__(self, token, condition, consequence, alternative):
+        self.token = token
+        self.condition = condition
+        self.consequence = consequence
+        self.alternative = alternative
+    
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        out = f"{self.token_literal()}{self.condition.string()} {self.consequence.string()}"
+        if self.alternative is not None:
+            out += f" else {self.alternative.string()}"
+        return out
+
 class ReturnStatement(Statement):
     def __init__(self, token, return_value):
         self.token = token
@@ -123,6 +139,17 @@ class ExpressionStatement(Statement):
     
     def string(self):
         return self.expression.string()
+
+class BlockStatement(Statement):
+    def __init__(self, token, statements):
+        self.token = token
+        self.statements = statements
+    
+    def token_literal(self):
+        return self.token.literal
+    
+    def string(self):
+        return "".join(map(lambda s: s.string(), self.statements))
 
 class AstTests(unittest.TestCase):
     def test_string(self):
