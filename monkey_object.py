@@ -10,6 +10,7 @@ class ObjectType(Enum):
     ERROR = auto()
     FUNCTION = auto()
     STRING = auto()
+    BUILTIN = auto()
 
     def __str__(self):
         if self == ObjectType.INTEGER:
@@ -111,3 +112,14 @@ class String(Object):
 
     def inspect(self):
         return self.value
+
+
+class Builtin(Object):
+    def __init__(self, fn):
+        self.fn = fn
+
+    def type(self):
+        return ObjectType.BUILTIN
+
+    def inspect(self):
+        return "built-in function"

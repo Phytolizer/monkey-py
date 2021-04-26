@@ -7,6 +7,25 @@ FALSE = monkey_object.Boolean(False)
 NULL = monkey_object.Null()
 
 
+def monkey_len(args):
+    if len(args) != 1:
+        return monkey_object.Error(
+            f"wrong number of arguments. got={len(args)}, want=1"
+        )
+
+    if isinstance(args[0], monkey_object.String):
+        return monkey_object.Integer(len(args[0].value))
+    else:
+        return monkey_object.Error(
+            f"argument to `len` not supported, got {args[0].type()}"
+        )
+
+
+BUILTINS = {
+    "len": monkey_object.Builtin(monkey_len),
+}
+
+
 def is_error(obj):
     return obj is not None and obj.type() == monkey_object.ObjectType.ERROR
 
@@ -200,10 +219,16 @@ def eval_minus_prefix_operator_expression(right):
 
 def eval_identifier(node, env):
     try:
-        val = env.get(node.value)
+        return env.get(node.value)
     except KeyError:
-        return monkey_object.Error(f"identifier not found: {node.value}")
-    return val
+        pass
+
+    try:
+        return BUILTINS[node.value]
+    except KeyError:
+        pass
+
+    return monkey_object.Error(f"identifier not found: {node.value}")
 
 
 def eval_expressions(exps, env):
@@ -217,11 +242,13 @@ def eval_expressions(exps, env):
 
 
 def apply_function(function, args):
-    if not isinstance(function, monkey_object.Function):
-        return monkey_object.Error(f"not a function: {function.type()}")
-    extended_env = extend_function_env(function, args)
-    evaluated = eval_node(function.body, extended_env)
-    return unwrap_return_value(evaluated)
+    if isinstance(function, monkey_object.Function):
+        extended_env = extend_function_env(function, args)
+        evaluated = eval_node(function.body, extended_env)
+        return unwrap_return_value(evaluated)
+    elif isinstance(function, monkey_object.Builtin):
+        return function.fn(args)
+    return monkey_object.Error(f"not a function: {function.type()}")
 
 
 def extend_function_env(function, args):
