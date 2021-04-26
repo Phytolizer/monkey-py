@@ -25,6 +25,7 @@ class Object(ABC):
     def type(self):
         pass
 
+    @abstractmethod
     def inspect(self):
         pass
 

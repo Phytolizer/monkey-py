@@ -7,6 +7,10 @@ FALSE = monkey_object.Boolean(False)
 NULL = monkey_object.Null()
 
 
+def is_error(obj):
+    return obj is not None and obj.type() == monkey_object.ObjectType.ERROR
+
+
 def eval_node(node):
     if isinstance(node, ast.Program):
         return eval_program(node)
@@ -14,6 +18,8 @@ def eval_node(node):
         return eval_block_statement(node)
     elif isinstance(node, ast.ReturnStatement):
         val = eval_node(node.return_value)
+        if is_error(val):
+            return val
         return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression)
@@ -21,10 +27,16 @@ def eval_node(node):
         return eval_if_expression(node)
     elif isinstance(node, ast.InfixExpression):
         left = eval_node(node.left)
+        if is_error(left):
+            return left
         right = eval_node(node.right)
+        if is_error(right):
+            return right
         return eval_infix_expression(node.operator, left, right)
     elif isinstance(node, ast.PrefixExpression):
         right = eval_node(node.right)
+        if is_error(right):
+            return right
         return eval_prefix_expression(node.operator, right)
     elif isinstance(node, ast.IntegerLiteral):
         return monkey_object.Integer(node.value)
