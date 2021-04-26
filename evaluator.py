@@ -1,12 +1,10 @@
-import lexer
-import object
-import parser
-import ast
+import monkey_object
+import monkey_ast as ast
 import unittest
 
-TRUE = object.Boolean(True)
-FALSE = object.Boolean(False)
-NULL = object.Null()
+TRUE = monkey_object.Boolean(True)
+FALSE = monkey_object.Boolean(False)
+NULL = monkey_object.Null()
 
 
 def eval_node(node):
@@ -22,7 +20,7 @@ def eval_node(node):
         right = eval_node(node.right)
         return eval_prefix_expression(node.operator, right)
     elif isinstance(node, ast.IntegerLiteral):
-        return object.Integer(node.value)
+        return monkey_object.Integer(node.value)
     elif isinstance(node, ast.Boolean):
         return native_bool_to_boolean_object(node.value)
     else:
@@ -54,8 +52,8 @@ def eval_prefix_expression(operator, right):
 
 def eval_infix_expression(operator, left, right):
     if (
-        left.type() == object.ObjectType.INTEGER
-        and right.type() == object.ObjectType.INTEGER
+        left.type() == monkey_object.ObjectType.INTEGER
+        and right.type() == monkey_object.ObjectType.INTEGER
     ):
         return eval_integer_infix_expression(operator, left, right)
     elif operator == "==":
@@ -68,17 +66,21 @@ def eval_infix_expression(operator, left, right):
 
 def eval_integer_infix_expression(operator, left, right):
     if operator == "+":
-        return object.Integer(left.value + right.value)
+        return monkey_object.Integer(left.value + right.value)
     elif operator == "-":
-        return object.Integer(left.value - right.value)
+        return monkey_object.Integer(left.value - right.value)
     elif operator == "*":
-        return object.Integer(left.value * right.value)
+        return monkey_object.Integer(left.value * right.value)
     elif operator == "/":
-        return object.Integer(left.value / right.value)
+        return monkey_object.Integer(left.value / right.value)
     elif operator == "<":
         return native_bool_to_boolean_object(left.value < right.value)
     elif operator == ">":
         return native_bool_to_boolean_object(left.value > right.value)
+    elif operator == "==":
+        return native_bool_to_boolean_object(left.value == right.value)
+    elif operator == "!=":
+        return native_bool_to_boolean_object(left.value != right.value)
     else:
         return NULL
 
@@ -95,73 +97,10 @@ def eval_bang_operator_expression(right):
 
 
 def eval_minus_prefix_operator_expression(right):
-    if right.type() != object.ObjectType.INTEGER:
+    if right.type() != monkey_object.ObjectType.INTEGER:
         return NULL
     value = right.value
-    return object.Integer(-value)
-
-
-class EvaluatorTests(unittest.TestCase):
-    def check_integer_object(self, obj, expected):
-        self.assertIsInstance(obj, object.Integer)
-        self.assertEqual(obj.value, expected)
-
-    def check_boolean_object(self, obj, expected):
-        self.assertIs(obj, expected)
-
-    def eval_setup(self, text):
-        l = lexer.Lexer(text)
-        p = parser.Parser(l)
-        program = p.parse_program()
-        return eval_node(program)
-
-    def test_eval_integer_expression(self):
-        tests = (
-            ("5", 5),
-            ("10", 10),
-            ("-5", -5),
-            ("-10", -10),
-            ("5 + 5 + 5 + 5 - 10", 10),
-            ("2 * 2 * 2 * 2 * 2", 32),
-            ("-50 + 100 + -50", 0),
-            ("5 * 2 + 10", 20),
-            ("5 + 2 * 10", 25),
-            ("20 + 2 * -10", 0),
-            ("50 / 2 * 2 + 10", 60),
-            ("2 * (5 + 10)", 30),
-            ("3 * 3 * 3 + 10", 37),
-            ("3 * (3 * 3) + 10", 37),
-            ("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50),
-        )
-        for i, tt in enumerate(tests):
-            with self.subTest(i=i):
-                evaluated = self.eval_setup(tt[0])
-                self.check_integer_object(evaluated, tt[1])
-
-    def test_eval_boolean_expression(self):
-        tests = (
-            ("true", TRUE),
-            ("false", FALSE),
-        )
-        for i, tt in enumerate(tests):
-            with self.subTest(i=i):
-                evaluated = self.eval_setup(tt[0])
-                self.check_boolean_object(evaluated, tt[1])
-
-    def test_eval_bang_operator(self):
-        tests = (
-            ("!true", FALSE),
-            ("!false", TRUE),
-            ("!5", FALSE),
-            ("!!true", TRUE),
-            ("!!false", FALSE),
-            ("!!5", TRUE),
-        )
-
-        for i, tt in enumerate(tests):
-            with self.subTest(i=i):
-                evaluated = self.eval_setup(tt[0])
-                self.check_boolean_object(evaluated, tt[1])
+    return monkey_object.Integer(-value)
 
 
 if __name__ == "__main__":

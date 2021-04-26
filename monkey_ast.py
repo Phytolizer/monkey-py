@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import unittest
 
 
 class Node(ABC):
@@ -192,30 +191,3 @@ class BlockStatement(Statement):
 
     def string(self):
         return "".join(map(lambda s: s.string(), self.statements))
-
-
-class AstTests(unittest.TestCase):
-    def test_string(self):
-        program = Program(
-            [
-                LetStatement(
-                    Token(TokenType.Let, "let"),
-                    Identifier(
-                        Token(TokenType.Ident, "myVar"),
-                        "myVar",
-                    ),
-                    Identifier(
-                        Token(TokenType.Ident, "anotherVar"),
-                        "anotherVar",
-                    ),
-                )
-            ]
-        )
-
-        self.assertEqual(program.string(), "let myVar = anotherVar;")
-
-
-if __name__ == "__main__":
-    from tokens import Token, TokenType
-
-    unittest.main()
