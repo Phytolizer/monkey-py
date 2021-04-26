@@ -1,3 +1,4 @@
+from environment import Environment
 from lexer import Lexer
 from parser import Parser
 import evaluator
@@ -9,6 +10,7 @@ def print_parser_errors(errs):
 
 
 if __name__ == "__main__":
+    env = Environment()
     while True:
         try:
             line = input(">> ")
@@ -22,6 +24,6 @@ if __name__ == "__main__":
         if len(p.errors) > 0:
             print_parser_errors(p.errors)
             continue
-        evaluated = evaluator.eval_node(program)
+        evaluated = evaluator.eval_node(program, env)
         if evaluated is not None:
             print(evaluated.inspect())

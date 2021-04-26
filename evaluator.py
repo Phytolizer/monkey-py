@@ -1,6 +1,6 @@
 import monkey_object
 import monkey_ast as ast
-import unittest
+from environment import Environment
 
 TRUE = monkey_object.Boolean(True)
 FALSE = monkey_object.Boolean(False)
@@ -11,30 +11,35 @@ def is_error(obj):
     return obj is not None and obj.type() == monkey_object.ObjectType.ERROR
 
 
-def eval_node(node):
+def eval_node(node, env):
     if isinstance(node, ast.Program):
-        return eval_program(node)
+        return eval_program(node, env)
     elif isinstance(node, ast.BlockStatement):
-        return eval_block_statement(node)
+        return eval_block_statement(node, env)
+    elif isinstance(node, ast.LetStatement):
+        val = eval_node(node.value, env)
+        if is_error(val):
+            return val
+        env.set(node.name.value, val)
     elif isinstance(node, ast.ReturnStatement):
-        val = eval_node(node.return_value)
+        val = eval_node(node.return_value, env)
         if is_error(val):
             return val
         return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
-        return eval_node(node.expression)
+        return eval_node(node.expression, env)
     elif isinstance(node, ast.IfExpression):
-        return eval_if_expression(node)
+        return eval_if_expression(node, env)
     elif isinstance(node, ast.InfixExpression):
-        left = eval_node(node.left)
+        left = eval_node(node.left, env)
         if is_error(left):
             return left
-        right = eval_node(node.right)
+        right = eval_node(node.right, env)
         if is_error(right):
             return right
         return eval_infix_expression(node.operator, left, right)
     elif isinstance(node, ast.PrefixExpression):
-        right = eval_node(node.right)
+        right = eval_node(node.right, env)
         if is_error(right):
             return right
         return eval_prefix_expression(node.operator, right)
@@ -42,6 +47,8 @@ def eval_node(node):
         return monkey_object.Integer(node.value)
     elif isinstance(node, ast.Boolean):
         return native_bool_to_boolean_object(node.value)
+    elif isinstance(node, ast.Identifier):
+        return eval_identifier(node, env)
     else:
         return None
 
@@ -57,10 +64,10 @@ def is_truthy(obj):
     return obj is not FALSE and obj is not NULL
 
 
-def eval_program(program):
+def eval_program(program, env):
     result = None
     for stmt in program.statements:
-        result = eval_node(stmt)
+        result = eval_node(stmt, env)
 
         if isinstance(result, monkey_object.ReturnValue):
             if result.value is None:
@@ -73,10 +80,10 @@ def eval_program(program):
     return result
 
 
-def eval_block_statement(bs):
+def eval_block_statement(bs, env):
     result = None
     for stmt in bs.statements:
-        result = eval_node(stmt)
+        result = eval_node(stmt, env)
 
         if isinstance(result, monkey_object.ReturnValue) or isinstance(
             result, monkey_object.Error
@@ -86,12 +93,12 @@ def eval_block_statement(bs):
     return result
 
 
-def eval_if_expression(node):
-    condition = eval_node(node.condition)
+def eval_if_expression(node, env):
+    condition = eval_node(node.condition, env)
     if is_truthy(condition):
-        return eval_node(node.consequence)
+        return eval_node(node.consequence, env)
     elif node.alternative is not None:
-        return eval_node(node.alternative)
+        return eval_node(node.alternative, env)
     else:
         return NULL
 
@@ -164,5 +171,9 @@ def eval_minus_prefix_operator_expression(right):
     return monkey_object.Integer(-value)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def eval_identifier(node, env):
+    try:
+        val = env.get(node.value)
+    except KeyError:
+        return monkey_object.Error(f"identifier not found: {node.value}")
+    return val

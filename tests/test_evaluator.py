@@ -1,3 +1,4 @@
+from environment import Environment
 import lexer
 import parser
 from evaluator import NULL, eval_node, TRUE, FALSE
@@ -20,7 +21,7 @@ class TestEvaluator:
         l = lexer.Lexer(text)
         p = parser.Parser(l)
         program = p.parse_program()
-        return eval_node(program)
+        return eval_node(program, Environment())
 
     @pytest.mark.parametrize(
         "text,expected",
@@ -155,9 +156,25 @@ class TestEvaluator:
                 "if (10 > 1) { true + false; }",
                 "unknown operator: BOOLEAN + BOOLEAN",
             ),
+            (
+                "foobar",
+                "identifier not found: foobar",
+            ),
         ],
     )
     def test_error_handling(self, text, expected):
         evaluated = self.eval_setup(text)
         assert isinstance(evaluated, monkey_object.Error)
         assert evaluated.message == expected
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("let a = 5; a;", 5),
+            ("let a = 5 * 5; a;", 25),
+            ("let a = 5; let b = a; b;", 5),
+            ("let a = 5; let b = a; let c = a + b + 5; c;", 15),
+        ],
+    )
+    def test_let_statements(self, text, expected):
+        self.check_integer_object(self.eval_setup(text), expected)
