@@ -200,3 +200,14 @@ class TestEvaluator:
     )
     def test_function_application(self, text, expected):
         self.check_integer_object(self.eval_setup(text), expected)
+
+    def test_closures(self):
+        text = """
+            let newAdder = fn(x) {
+                fn(y) { x + y; };
+            };
+
+            let addTwo = newAdder(2);
+            addTwo(2);
+        """
+        self.check_integer_object(self.eval_setup(text), 4)
