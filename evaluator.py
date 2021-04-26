@@ -8,8 +8,13 @@ NULL = monkey_object.Null()
 
 
 def eval_node(node):
-    if isinstance(node, ast.Program) or isinstance(node, ast.BlockStatement):
-        return eval_statements(node.statements)
+    if isinstance(node, ast.Program):
+        return eval_program(node)
+    elif isinstance(node, ast.BlockStatement):
+        return eval_block_statement(node)
+    elif isinstance(node, ast.ReturnStatement):
+        val = eval_node(node.return_value)
+        return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression)
     elif isinstance(node, ast.IfExpression):
@@ -40,10 +45,28 @@ def is_truthy(obj):
     return obj is not FALSE and obj is not NULL
 
 
-def eval_statements(stmts):
+def eval_program(program):
     result = None
-    for stmt in stmts:
+    for stmt in program.statements:
         result = eval_node(stmt)
+
+        if isinstance(result, monkey_object.ReturnValue):
+            if result.value is None:
+                return NULL
+            else:
+                return result.value
+
+    return result
+
+
+def eval_block_statement(bs):
+    result = None
+    for stmt in bs.statements:
+        result = eval_node(stmt)
+
+        if isinstance(result, monkey_object.ReturnValue):
+            return result
+
     return result
 
 

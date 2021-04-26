@@ -106,3 +106,24 @@ class TestEvaluator:
             self.check_null_object(evaluated)
         else:
             raise NotImplementedError("woops")
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("return;", None),
+            ("return true;", TRUE),
+            ("return 10;", 10),
+            ("9; return 10;", 10),
+            ("return 10; 9;", 10),
+            ("9; return 10; 9;", 10),
+            ("if (5 < 10) { if (6 > 4) { return 10; } return 1; }", 10),
+        ],
+    )
+    def test_eval_return_statements(self, text, expected):
+        evaluated = self.eval_setup(text)
+        if isinstance(expected, int):
+            self.check_integer_object(evaluated, expected)
+        elif isinstance(expected, monkey_object.Boolean):
+            self.check_boolean_object(evaluated, expected)
+        else:
+            self.check_null_object(evaluated)

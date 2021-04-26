@@ -6,6 +6,7 @@ class ObjectType(Enum):
     INTEGER = auto()
     BOOLEAN = auto()
     NULL = auto()
+    RETURN_VALUE = auto()
 
 
 class Object(ABC):
@@ -48,3 +49,14 @@ class Null(Object):
 
     def inspect(self):
         return "null"
+
+
+class ReturnValue(Object):
+    def __init__(self, value):
+        self.value = value
+
+    def type(self):
+        return ObjectType.RETURN_VALUE
+
+    def inspect(self):
+        return self.value.inspect()
