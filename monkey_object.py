@@ -8,6 +8,7 @@ class ObjectType(Enum):
     NULL = auto()
     RETURN_VALUE = auto()
     ERROR = auto()
+    FUNCTION = auto()
 
     def __str__(self):
         if self == ObjectType.INTEGER:
@@ -83,3 +84,16 @@ class Error(Object):
 
     def inspect(self):
         return f"ERROR: {self.message}"
+
+
+class Function(Object):
+    def __init__(self, parameters, body, env):
+        self.parameters = parameters
+        self.body = body
+        self.env = env
+
+    def type(self):
+        return ObjectType.FUNCTION
+
+    def inspect(self):
+        return f"fn({self.parameters.join(', ')}) {{\n{self.body.string()}\n}}"

@@ -178,3 +178,25 @@ class TestEvaluator:
     )
     def test_let_statements(self, text, expected):
         self.check_integer_object(self.eval_setup(text), expected)
+
+    def test_function_object(self):
+        text = "fn(x) { x + 2; };"
+        evaluated = self.eval_setup(text)
+        assert isinstance(evaluated, monkey_object.Function)
+        assert len(evaluated.parameters) == 1
+        assert evaluated.parameters[0].string() == "x"
+        assert evaluated.body.string() == "(x + 2)"
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("let identity = fn(x) { x; }; identity(5);", 5),
+            ("let identity = fn(x) { return x; }; identity(5);", 5),
+            ("let double = fn(x) { x * 2; }; double(5);", 10),
+            ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+            ("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+            ("fn(x) { x; }(5)", 5),
+        ],
+    )
+    def test_function_application(self, text, expected):
+        self.check_integer_object(self.eval_setup(text), expected)

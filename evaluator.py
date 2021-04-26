@@ -28,6 +28,18 @@ def eval_node(node, env):
         return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression, env)
+    elif isinstance(node, ast.CallExpression):
+        function = eval_node(node.function, env)
+        if is_error(function):
+            return function
+        args = eval_expressions(node.arguments, env)
+        if len(args) == 1 and is_error(args[0]):
+            return args[0]
+        return apply_function(function, args)
+    elif isinstance(node, ast.FunctionLiteral):
+        params = node.parameters
+        body = node.body
+        return monkey_object.Function(params, body, env)
     elif isinstance(node, ast.IfExpression):
         return eval_if_expression(node, env)
     elif isinstance(node, ast.InfixExpression):
@@ -177,3 +189,36 @@ def eval_identifier(node, env):
     except KeyError:
         return monkey_object.Error(f"identifier not found: {node.value}")
     return val
+
+
+def eval_expressions(exps, env):
+    result = []
+    for e in exps:
+        evaluated = eval_node(e, env)
+        if is_error(evaluated):
+            return [evaluated]
+        result.append(evaluated)
+    return result
+
+
+def apply_function(function, args):
+    if not isinstance(function, monkey_object.Function):
+        return monkey_object.Error(f"not a function: {function.type()}")
+    extended_env = extend_function_env(function, args)
+    evaluated = eval_node(function.body, extended_env)
+    return unwrap_return_value(evaluated)
+
+
+def extend_function_env(function, args):
+    env = Environment(function.env)
+
+    for arg, param in zip(args, function.parameters):
+        env.set(param.value, arg)
+
+    return env
+
+
+def unwrap_return_value(obj):
+    if isinstance(obj, monkey_object.ReturnValue):
+        return obj.value
+    return obj
