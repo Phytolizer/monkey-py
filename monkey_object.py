@@ -9,6 +9,7 @@ class ObjectType(Enum):
     RETURN_VALUE = auto()
     ERROR = auto()
     FUNCTION = auto()
+    STRING = auto()
 
     def __str__(self):
         if self == ObjectType.INTEGER:
@@ -17,6 +18,8 @@ class ObjectType(Enum):
             return "BOOLEAN"
         elif self == ObjectType.NULL:
             return "NULL"
+        elif self == ObjectType.STRING:
+            return "STRING"
         else:
             raise Exception("unexpected type for __str__")
 
@@ -97,3 +100,14 @@ class Function(Object):
 
     def inspect(self):
         return f"fn({self.parameters.join(', ')}) {{\n{self.body.string()}\n}}"
+
+
+class String(Object):
+    def __init__(self, value):
+        self.value = value
+
+    def type(self):
+        return ObjectType.STRING
+
+    def inspect(self):
+        return self.value

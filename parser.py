@@ -46,6 +46,7 @@ class Parser:
         self.register_prefix(TokenType.LParen, self.parse_grouped_expression)
         self.register_prefix(TokenType.If, self.parse_if_expression)
         self.register_prefix(TokenType.Fn, self.parse_function_literal)
+        self.register_prefix(TokenType.String, self.parse_string_literal)
 
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -308,3 +309,6 @@ class Parser:
         if not self.expect_peek(TokenType.RParen):
             return None
         return exp
+
+    def parse_string_literal(self):
+        return ast.StringLiteral(self.cur_token, self.cur_token.literal)

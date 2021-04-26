@@ -24,6 +24,8 @@ class TestLexer:
 
             10 == 10;
             10 != 9;
+            "foobar"
+            "foo bar"
         """
         return Lexer(text)
 
@@ -103,6 +105,9 @@ class TestLexer:
             (TokenType.NotEq, "!="),
             (TokenType.Num, "9"),
             (TokenType.Semicolon, ";"),
+            (TokenType.String, "foobar"),
+            (TokenType.String, "foo bar"),
+            (TokenType.Eof, ""),
         ],
     )
     def test_next_token(self, lexer, token_type, token_name):

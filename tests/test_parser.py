@@ -314,3 +314,16 @@ class TestParser:
         self.check_literal_expression(exp.arguments[0], 1)
         self.check_infix_expression(exp.arguments[1], 2, "*", 3)
         self.check_infix_expression(exp.arguments[2], 4, "+", 5)
+
+    def test_string_literal(self):
+        text = '"foobar"'
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        assert len(program.statements) == 1
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        exp = stmt.expression
+        assert isinstance(exp, ast.StringLiteral)
+        assert exp.value == "foobar"

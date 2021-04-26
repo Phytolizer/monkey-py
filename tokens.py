@@ -7,6 +7,7 @@ class TokenType(Enum):
 
     Ident = auto()
     Num = auto()
+    String = auto()
 
     Fn = auto()
     Let = auto()

@@ -56,6 +56,13 @@ class Lexer:
 
         return self.input[position : self.position]
 
+    def read_string(self):
+        self.read_char()
+        position = self.position
+        while self.ch != '"':
+            self.read_char()
+        return self.input[position : self.position]
+
     def next_token(self):
         tok = Token(TokenType.Illegal, "")
 
@@ -97,6 +104,8 @@ class Lexer:
             tok = Token(TokenType.Less, "<")
         elif self.ch == ">":
             tok = Token(TokenType.Greater, ">")
+        elif self.ch == '"':
+            tok = Token(TokenType.String, self.read_string())
         elif self.ch == "\0":
             tok = Token(TokenType.Eof, "")
         elif is_letter(self.ch):

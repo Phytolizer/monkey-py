@@ -191,3 +191,15 @@ class BlockStatement(Statement):
 
     def string(self):
         return "".join(map(lambda s: s.string(), self.statements))
+
+
+class StringLiteral(Expression):
+    def __init__(self, token, value):
+        self.token = token
+        self.value = value
+
+    def token_literal(self):
+        return self.token.literal
+
+    def string(self):
+        return self.value

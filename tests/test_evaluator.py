@@ -211,3 +211,9 @@ class TestEvaluator:
             addTwo(2);
         """
         self.check_integer_object(self.eval_setup(text), 4)
+
+    def test_string_literal(self):
+        text = '"Hello, world!"'
+        evaluated = self.eval_setup(text)
+        assert isinstance(evaluated, monkey_object.String)
+        assert evaluated.value == "Hello, world!"

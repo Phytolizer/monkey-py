@@ -61,6 +61,8 @@ def eval_node(node, env):
         return native_bool_to_boolean_object(node.value)
     elif isinstance(node, ast.Identifier):
         return eval_identifier(node, env)
+    elif isinstance(node, ast.StringLiteral):
+        return monkey_object.String(node.value)
     else:
         return None
 
