@@ -8,10 +8,12 @@ NULL = monkey_object.Null()
 
 
 def eval_node(node):
-    if isinstance(node, ast.Program):
+    if isinstance(node, ast.Program) or isinstance(node, ast.BlockStatement):
         return eval_statements(node.statements)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression)
+    elif isinstance(node, ast.IfExpression):
+        return eval_if_expression(node)
     elif isinstance(node, ast.InfixExpression):
         left = eval_node(node.left)
         right = eval_node(node.right)
@@ -34,11 +36,25 @@ def native_bool_to_boolean_object(obj):
         return FALSE
 
 
+def is_truthy(obj):
+    return obj is not FALSE and obj is not NULL
+
+
 def eval_statements(stmts):
     result = None
     for stmt in stmts:
         result = eval_node(stmt)
     return result
+
+
+def eval_if_expression(node):
+    condition = eval_node(node.condition)
+    if is_truthy(condition):
+        return eval_node(node.consequence)
+    elif node.alternative is not None:
+        return eval_node(node.alternative)
+    else:
+        return NULL
 
 
 def eval_prefix_expression(operator, right):

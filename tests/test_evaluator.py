@@ -1,6 +1,6 @@
 import lexer
 import parser
-from evaluator import eval_node, TRUE, FALSE
+from evaluator import NULL, eval_node, TRUE, FALSE
 import pytest
 import monkey_object
 
@@ -12,6 +12,9 @@ class TestEvaluator:
 
     def check_boolean_object(self, obj, expected):
         assert obj is expected
+
+    def check_null_object(self, obj):
+        assert obj is NULL
 
     def eval_setup(self, text):
         l = lexer.Lexer(text)
@@ -86,3 +89,20 @@ class TestEvaluator:
     def test_eval_bang_operator(self, text, expected):
         evaluated = self.eval_setup(text)
         self.check_boolean_object(evaluated, expected)
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("if (5 < 10) { 5 } else { 10 }", 5),
+            ("if (5 > 10) { 5 } else { 10 }", 10),
+            ("if (5 > 10) { 5 }", None),
+        ],
+    )
+    def test_eval_if_expression(self, text, expected):
+        evaluated = self.eval_setup(text)
+        if isinstance(expected, int):
+            self.check_integer_object(evaluated, expected)
+        elif expected is None:
+            self.check_null_object(evaluated)
+        else:
+            raise NotImplementedError("woops")
