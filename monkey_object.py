@@ -7,6 +7,17 @@ class ObjectType(Enum):
     BOOLEAN = auto()
     NULL = auto()
     RETURN_VALUE = auto()
+    ERROR = auto()
+
+    def __str__(self):
+        if self == ObjectType.INTEGER:
+            return "INTEGER"
+        elif self == ObjectType.BOOLEAN:
+            return "BOOLEAN"
+        elif self == ObjectType.NULL:
+            return "NULL"
+        else:
+            raise Exception("unexpected type for __str__")
 
 
 class Object(ABC):
@@ -60,3 +71,14 @@ class ReturnValue(Object):
 
     def inspect(self):
         return self.value.inspect()
+
+
+class Error(Object):
+    def __init__(self, message):
+        self.message = message
+
+    def type(self):
+        return ObjectType.ERROR
+
+    def inspect(self):
+        return f"ERROR: {self.message}"

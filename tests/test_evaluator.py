@@ -127,3 +127,37 @@ class TestEvaluator:
             self.check_boolean_object(evaluated, expected)
         else:
             self.check_null_object(evaluated)
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            (
+                "5 + true;",
+                "type mismatch: INTEGER + BOOLEAN",
+            ),
+            (
+                "5 + true; 5;",
+                "type mismatch: INTEGER + BOOLEAN",
+            ),
+            (
+                "-true",
+                "unknown operator: -BOOLEAN",
+            ),
+            (
+                "true + false;",
+                "unknown operator: BOOLEAN + BOOLEAN",
+            ),
+            (
+                "5; true + false; 5",
+                "unknown operator: BOOLEAN + BOOLEAN",
+            ),
+            (
+                "if (10 > 1) { true + false; }",
+                "unknown operator: BOOLEAN + BOOLEAN",
+            ),
+        ],
+    )
+    def test_error_handling(self, text, expected):
+        evaluated = self.eval_setup(text)
+        assert isinstance(evaluated, monkey_object.Error)
+        assert evaluated.message == expected

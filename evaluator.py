@@ -55,6 +55,8 @@ def eval_program(program):
                 return NULL
             else:
                 return result.value
+        if isinstance(result, monkey_object.Error):
+            return result
 
     return result
 
@@ -64,7 +66,9 @@ def eval_block_statement(bs):
     for stmt in bs.statements:
         result = eval_node(stmt)
 
-        if isinstance(result, monkey_object.ReturnValue):
+        if isinstance(result, monkey_object.ReturnValue) or isinstance(
+            result, monkey_object.Error
+        ):
             return result
 
     return result
@@ -86,7 +90,7 @@ def eval_prefix_expression(operator, right):
     elif operator == "-":
         return eval_minus_prefix_operator_expression(right)
     else:
-        return NULL
+        return NULL  # unreachable?
 
 
 def eval_infix_expression(operator, left, right):
@@ -99,8 +103,14 @@ def eval_infix_expression(operator, left, right):
         return native_bool_to_boolean_object(left == right)
     elif operator == "!=":
         return native_bool_to_boolean_object(left != right)
+    elif left.type() != right.type():
+        return monkey_object.Error(
+            f"type mismatch: {left.type()} {operator} {right.type()}"
+        )
     else:
-        return NULL
+        return monkey_object.Error(
+            f"unknown operator: {left.type()} {operator} {right.type()}"
+        )
 
 
 def eval_integer_infix_expression(operator, left, right):
@@ -137,7 +147,7 @@ def eval_bang_operator_expression(right):
 
 def eval_minus_prefix_operator_expression(right):
     if right.type() != monkey_object.ObjectType.INTEGER:
-        return NULL
+        return monkey_object.Error(f"unknown operator: -{right.type()}")
     value = right.value
     return monkey_object.Integer(-value)
 
