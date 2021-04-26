@@ -160,6 +160,10 @@ class TestEvaluator:
                 "foobar",
                 "identifier not found: foobar",
             ),
+            (
+                '"Hello" - "World"',
+                "unknown operator: STRING - STRING",
+            ),
         ],
     )
     def test_error_handling(self, text, expected):
@@ -217,3 +221,9 @@ class TestEvaluator:
         evaluated = self.eval_setup(text)
         assert isinstance(evaluated, monkey_object.String)
         assert evaluated.value == "Hello, world!"
+
+    def test_string_concatenation(self):
+        text = '"Hello" + " " + "World!"'
+        evaluated = self.eval_setup(text)
+        assert isinstance(evaluated, monkey_object.String)
+        assert evaluated.value == "Hello World!"

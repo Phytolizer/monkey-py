@@ -132,6 +132,11 @@ def eval_infix_expression(operator, left, right):
         and right.type() == monkey_object.ObjectType.INTEGER
     ):
         return eval_integer_infix_expression(operator, left, right)
+    elif (
+        left.type() == monkey_object.ObjectType.STRING
+        and right.type() == monkey_object.ObjectType.STRING
+    ):
+        return eval_string_infix_expression(operator, left, right)
     elif operator == "==":
         return native_bool_to_boolean_object(left == right)
     elif operator == "!=":
@@ -165,6 +170,14 @@ def eval_integer_infix_expression(operator, left, right):
         return native_bool_to_boolean_object(left.value != right.value)
     else:
         return NULL
+
+
+def eval_string_infix_expression(operator, left, right):
+    if operator != "+":
+        return monkey_object.Error(
+            f"unknown operator: {left.type()} {operator} {right.type()}"
+        )
+    return monkey_object.String(left.value + right.value)
 
 
 def eval_bang_operator_expression(right):
