@@ -8,6 +8,7 @@ TRUE = object.Boolean(True)
 FALSE = object.Boolean(False)
 NULL = object.Null()
 
+
 def eval_node(node):
     if isinstance(node, ast.Program):
         return eval_statements(node.statements)
@@ -27,17 +28,20 @@ def eval_node(node):
     else:
         return None
 
+
 def native_bool_to_boolean_object(obj):
     if obj:
         return TRUE
     else:
         return FALSE
 
+
 def eval_statements(stmts):
     result = None
     for stmt in stmts:
         result = eval_node(stmt)
     return result
+
 
 def eval_prefix_expression(operator, right):
     if operator == "!":
@@ -47,17 +51,37 @@ def eval_prefix_expression(operator, right):
     else:
         return NULL
 
+
 def eval_infix_expression(operator, left, right):
-    if operator == '+':
-        return object.Integer(left.value + right.value)
-    elif operator == '-':
-        return object.Integer(left.value - right.value)
-    elif operator == '*':
-        return object.Integer(left.value * right.value)
-    elif operator == '/':
-        return object.Integer(left.value / right.value)
+    if (
+        left.type() == object.ObjectType.INTEGER
+        and right.type() == object.ObjectType.INTEGER
+    ):
+        return eval_integer_infix_expression(operator, left, right)
+    elif operator == "==":
+        return native_bool_to_boolean_object(left == right)
+    elif operator == "!=":
+        return native_bool_to_boolean_object(left != right)
     else:
         return NULL
+
+
+def eval_integer_infix_expression(operator, left, right):
+    if operator == "+":
+        return object.Integer(left.value + right.value)
+    elif operator == "-":
+        return object.Integer(left.value - right.value)
+    elif operator == "*":
+        return object.Integer(left.value * right.value)
+    elif operator == "/":
+        return object.Integer(left.value / right.value)
+    elif operator == "<":
+        return native_bool_to_boolean_object(left.value < right.value)
+    elif operator == ">":
+        return native_bool_to_boolean_object(left.value > right.value)
+    else:
+        return NULL
+
 
 def eval_bang_operator_expression(right):
     if right is TRUE:
@@ -69,17 +93,19 @@ def eval_bang_operator_expression(right):
     else:
         return FALSE
 
+
 def eval_minus_prefix_operator_expression(right):
     if right.type() != object.ObjectType.INTEGER:
         return NULL
     value = right.value
     return object.Integer(-value)
 
+
 class EvaluatorTests(unittest.TestCase):
     def check_integer_object(self, obj, expected):
         self.assertIsInstance(obj, object.Integer)
         self.assertEqual(obj.value, expected)
-    
+
     def check_boolean_object(self, obj, expected):
         self.assertIs(obj, expected)
 
@@ -111,16 +137,17 @@ class EvaluatorTests(unittest.TestCase):
             with self.subTest(i=i):
                 evaluated = self.eval_setup(tt[0])
                 self.check_integer_object(evaluated, tt[1])
-    
+
     def test_eval_boolean_expression(self):
         tests = (
             ("true", TRUE),
             ("false", FALSE),
         )
         for i, tt in enumerate(tests):
-            evaluated = self.eval_setup(tt[0])
-            self.check_boolean_object(evaluated, tt[1])
-    
+            with self.subTest(i=i):
+                evaluated = self.eval_setup(tt[0])
+                self.check_boolean_object(evaluated, tt[1])
+
     def test_eval_bang_operator(self):
         tests = (
             ("!true", FALSE),
@@ -135,6 +162,7 @@ class EvaluatorTests(unittest.TestCase):
             with self.subTest(i=i):
                 evaluated = self.eval_setup(tt[0])
                 self.check_boolean_object(evaluated, tt[1])
-    
+
+
 if __name__ == "__main__":
     unittest.main()

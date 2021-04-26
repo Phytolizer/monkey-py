@@ -3,6 +3,7 @@ from tokens import Token, TokenType
 import ast
 import unittest
 
+
 class Precedence(IntEnum):
     LOWEST = auto()
     EQUALS = auto()
@@ -11,6 +12,7 @@ class Precedence(IntEnum):
     PRODUCT = auto()
     PREFIX = auto()
     CALL = auto()
+
 
 PRECEDENCES = {
     TokenType.Eq: Precedence.EQUALS,
@@ -23,6 +25,7 @@ PRECEDENCES = {
     TokenType.Slash: Precedence.PRODUCT,
     TokenType.LParen: Precedence.CALL,
 }
+
 
 class Parser:
     def __init__(self, lexer):
@@ -44,7 +47,7 @@ class Parser:
         self.register_prefix(TokenType.LParen, self.parse_grouped_expression)
         self.register_prefix(TokenType.If, self.parse_if_expression)
         self.register_prefix(TokenType.Fn, self.parse_function_literal)
-        
+
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
         self.register_infix(TokenType.Star, self.parse_infix_expression)
@@ -54,22 +57,22 @@ class Parser:
         self.register_infix(TokenType.Less, self.parse_infix_expression)
         self.register_infix(TokenType.Greater, self.parse_infix_expression)
         self.register_infix(TokenType.LParen, self.parse_call_expression)
-    
+
     def peek_precedence(self):
         try:
             return PRECEDENCES[self.peek_token.type]
         except KeyError:
             return Precedence.LOWEST
-    
+
     def cur_precedence(self):
         try:
             return PRECEDENCES[self.cur_token.type]
         except KeyError:
             return Precedence.LOWEST
-    
+
     def register_prefix(self, type, fn):
         self.prefix_parse_fns[type] = fn
-    
+
     def register_infix(self, type, fn):
         self.infix_parse_fns[type] = fn
 
@@ -77,19 +80,17 @@ class Parser:
         self.errors.append(
             f"expected next token to be {type}, got {self.peek_token.type} instead"
         )
-    
+
     def no_prefix_parse_fn_error(self, type):
-        self.errors.append(
-            f"no prefix parse fn for {type} found"
-        )
-    
+        self.errors.append(f"no prefix parse fn for {type} found")
+
     def next_token(self):
         self.cur_token = self.peek_token
         self.peek_token = self.lexer.next_token()
 
     def cur_token_is(self, type):
         return self.cur_token.type == type
-    
+
     def peek_token_is(self, type):
         return self.peek_token.type == type
 
@@ -100,7 +101,7 @@ class Parser:
         else:
             self.peek_error(type)
             return False
-    
+
     def parse_program(self):
         program = ast.Program([])
 
@@ -109,9 +110,9 @@ class Parser:
             if stmt is not None:
                 program.statements.append(stmt)
             self.next_token()
-        
+
         return program
-    
+
     def parse_statement(self):
         if self.cur_token.type == TokenType.Let:
             return self.parse_let_statement()
@@ -119,25 +120,25 @@ class Parser:
             return self.parse_return_statement()
         else:
             return self.parse_expression_statement()
-    
+
     def parse_let_statement(self):
         tok = self.cur_token
 
         if not self.expect_peek(TokenType.Ident):
             return None
-        
+
         name = ast.Identifier(self.cur_token, self.cur_token.literal)
 
         if not self.expect_peek(TokenType.Assign):
             return None
-        
+
         self.next_token()
         value = self.parse_expression(Precedence.LOWEST)
         if self.peek_token_is(TokenType.Semicolon):
             self.next_token()
-        
+
         return ast.LetStatement(tok, name, value)
-    
+
     def parse_return_statement(self):
         token = self.cur_token
 
@@ -146,9 +147,9 @@ class Parser:
         return_value = self.parse_expression(Precedence.LOWEST)
         if self.peek_token_is(TokenType.Semicolon):
             self.next_token()
-        
+
         return ast.ReturnStatement(token, return_value)
-    
+
     def parse_expression_statement(self):
         token = self.cur_token
         expression = self.parse_expression(Precedence.LOWEST)
@@ -157,7 +158,7 @@ class Parser:
             self.next_token()
 
         return ast.ExpressionStatement(token, expression)
-    
+
     def parse_expression(self, precedence):
         try:
             prefix = self.prefix_parse_fns[self.cur_token.type]
@@ -167,12 +168,15 @@ class Parser:
 
         left_exp = prefix()
 
-        while not self.peek_token_is(TokenType.Semicolon) and precedence < self.peek_precedence():
+        while (
+            not self.peek_token_is(TokenType.Semicolon)
+            and precedence < self.peek_precedence()
+        ):
             try:
                 infix = self.infix_parse_fns[self.peek_token.type]
             except KeyError:
                 return left_exp
-            
+
             self.next_token()
             left_exp = infix(left_exp)
 
@@ -182,7 +186,7 @@ class Parser:
         token = self.cur_token
         arguments = self.parse_call_arguments()
         return ast.CallExpression(token, function, arguments)
-    
+
     def parse_call_arguments(self):
         args = []
         if self.peek_token_is(TokenType.RParen):
@@ -207,7 +211,7 @@ class Parser:
             return None
         body = self.parse_block_statement()
         return ast.FunctionLiteral(token, parameters, body)
-    
+
     def parse_function_parameters(self):
         identifiers = []
         if self.peek_token_is(TokenType.RParen):
@@ -237,7 +241,7 @@ class Parser:
             return None
         if not self.expect_peek(TokenType.LBrace):
             return None
-        
+
         consequence = self.parse_block_statement()
 
         alternative = None
@@ -245,23 +249,25 @@ class Parser:
             self.next_token()
 
             if not self.expect_peek(TokenType.LBrace):
-                return Nont
+                return None
             alternative = self.parse_block_statement()
 
         return ast.IfExpression(token, condition, consequence, alternative)
-    
+
     def parse_block_statement(self):
         token = self.cur_token
         statements = []
         self.next_token()
 
-        while not self.cur_token_is(TokenType.RBrace) and not self.cur_token_is(TokenType.Eof):
+        while not self.cur_token_is(TokenType.RBrace) and not self.cur_token_is(
+            TokenType.Eof
+        ):
             stmt = self.parse_statement()
             if stmt is not None:
                 statements.append(stmt)
             self.next_token()
         return ast.BlockStatement(token, statements)
-    
+
     def parse_infix_expression(self, left):
         token = self.cur_token
         operator = self.cur_token.literal
@@ -282,30 +288,29 @@ class Parser:
 
     def parse_identifier(self):
         return ast.Identifier(self.cur_token, self.cur_token.literal)
-    
+
     def parse_integer_literal(self):
         token = self.cur_token
 
         try:
             value = int(self.cur_token.literal)
         except ValueError:
-            self.errors.append(
-                f"could not parse '{self.cur_token.literal}' as integer"
-            )
+            self.errors.append(f"could not parse '{self.cur_token.literal}' as integer")
             return None
-        
+
         return ast.IntegerLiteral(token, value)
-    
+
     def parse_boolean(self):
         return ast.Boolean(self.cur_token, self.cur_token_is(TokenType.TRUE))
-    
+
     def parse_grouped_expression(self):
         self.next_token()
         exp = self.parse_expression(Precedence.LOWEST)
         if not self.expect_peek(TokenType.RParen):
             return None
         return exp
-    
+
+
 class ParserTests(unittest.TestCase):
     def check_let_statement(self, stmt, name):
         self.assertEqual(stmt.token_literal(), "let")
@@ -317,22 +322,22 @@ class ParserTests(unittest.TestCase):
         for error in parser.errors:
             print(f"parser error: {error}")
         self.assertEqual(len(parser.errors), 0)
-    
+
     def check_integer_literal(self, actual, expected):
         self.assertIsInstance(actual, ast.IntegerLiteral)
         self.assertEqual(actual.value, expected)
         self.assertEqual(actual.token_literal(), str(expected))
-    
+
     def check_identifier(self, exp, value):
         self.assertIsInstance(exp, ast.Identifier)
         self.assertEqual(exp.value, value)
         self.assertEqual(exp.token_literal(), value)
-    
+
     def check_boolean(self, exp, value):
         self.assertIsInstance(exp, ast.Boolean)
         self.assertEqual(exp.value, value)
         self.assertEqual(exp.token_literal(), str(value))
-    
+
     def check_literal_expression(self, exp, expected):
         if isinstance(exp, int):
             self.check_integer_literal(exp, expected)
@@ -340,7 +345,7 @@ class ParserTests(unittest.TestCase):
             self.check_identifier(exp, expected)
         elif isinstance(exp, bool):
             self.check_boolean(exp, expected)
-    
+
     def check_infix_expression(self, exp, left, operator, right):
         self.assertIsInstance(exp, ast.InfixExpression)
         self.check_literal_expression(exp.left, left)
@@ -372,7 +377,7 @@ class ParserTests(unittest.TestCase):
                 stmt = program.statements[i]
                 self.check_let_statement(stmt, tt[0])
                 self.check_literal_expression(stmt.value, tt[1])
-    
+
     def test_return_statements(self):
         text = """
         return 5;
@@ -391,7 +396,7 @@ class ParserTests(unittest.TestCase):
             with self.subTest(i=i):
                 self.assertIsInstance(stmt, ast.ReturnStatement)
                 self.assertEqual(stmt.token_literal(), "return")
-    
+
     def test_identifier_expression(self):
         text = "foobar;"
 
@@ -401,7 +406,7 @@ class ParserTests(unittest.TestCase):
         program = p.parse_program()
         self.check_parser_errors(p)
 
-        self.assertEqual(len(program.statements), 1)    
+        self.assertEqual(len(program.statements), 1)
         stmt = program.statements[0]
         self.assertIsInstance(stmt, ast.ExpressionStatement)
         self.check_literal_expression(stmt.expression, "foobar")
@@ -418,7 +423,7 @@ class ParserTests(unittest.TestCase):
         stmt = program.statements[0]
         self.assertIsInstance(stmt, ast.ExpressionStatement)
         self.check_literal_expression(stmt.expression, 5)
-    
+
     def test_boolean_expression(self):
         text = "true;"
         l = Lexer(text)
@@ -430,7 +435,7 @@ class ParserTests(unittest.TestCase):
         stmt = program.statements[0]
         self.assertIsInstance(stmt, ast.ExpressionStatement)
         self.check_literal_expression(stmt.expression, True)
-    
+
     def test_prefix_expressions(self):
         prefix_tests = (
             ("!5;", "!", 5),
@@ -453,7 +458,7 @@ class ParserTests(unittest.TestCase):
                 self.assertIsInstance(exp, ast.PrefixExpression)
                 self.assertEqual(exp.operator, tt[1])
                 self.check_literal_expression(exp.right, tt[2])
-            
+
     def test_infix_expressions(self):
         infix_tests = (
             ("5 + 5;", 5, "+", 5),
@@ -479,7 +484,7 @@ class ParserTests(unittest.TestCase):
                 stmt = program.statements[0]
                 self.assertIsInstance(stmt, ast.ExpressionStatement)
                 self.check_infix_expression(stmt.expression, *tt[1:])
-    
+
     def test_operator_precedence(self):
         tests = (
             ("-a * b", "((-a) * b)"),
@@ -505,7 +510,10 @@ class ParserTests(unittest.TestCase):
             ("-(5 + 5)", "(-(5 + 5))"),
             ("!(true == true)", "(!(true == true))"),
             ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
-            ("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+            (
+                "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+                "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+            ),
             ("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
         )
 
@@ -516,7 +524,7 @@ class ParserTests(unittest.TestCase):
                 program = p.parse_program()
                 self.check_parser_errors(p)
                 self.assertEqual(program.string(), tt[1])
-    
+
     def test_if_expression(self):
         text = "if (x < y) { x }"
         l = Lexer(text)
@@ -535,7 +543,7 @@ class ParserTests(unittest.TestCase):
         self.assertIsInstance(consequence, ast.ExpressionStatement)
         self.check_identifier(consequence.expression, "x")
         self.assertIsNone(exp.alternative)
-    
+
     def test_if_else_expression(self):
         text = "if (x < y) { x } else { y }"
         l = Lexer(text)
@@ -558,7 +566,7 @@ class ParserTests(unittest.TestCase):
         alternative = exp.alternative.statements[0]
         self.assertIsInstance(alternative, ast.ExpressionStatement)
         self.check_identifier(alternative.expression, "y")
-    
+
     def test_function_literal(self):
         text = "fn(x, y) { x + y; }"
         l = Lexer(text)
@@ -578,7 +586,7 @@ class ParserTests(unittest.TestCase):
         body_stmt = function.body.statements[0]
         self.assertIsInstance(body_stmt, ast.ExpressionStatement)
         self.check_infix_expression(body_stmt.expression, "x", "+", "y")
-    
+
     def test_function_parameters(self):
         tests = (
             ("fn() {};", []),
@@ -599,7 +607,7 @@ class ParserTests(unittest.TestCase):
                 self.assertEqual(len(function.parameters), len(tt[1]))
                 for param, ident in zip(function.parameters, tt[1]):
                     self.check_literal_expression(param, ident)
-    
+
     def test_call_expression(self):
         text = "add(1, 2 * 3, 4 + 5)"
         l = Lexer(text)
@@ -617,6 +625,8 @@ class ParserTests(unittest.TestCase):
         self.check_infix_expression(exp.arguments[1], 2, "*", 3)
         self.check_infix_expression(exp.arguments[2], 4, "+", 5)
 
+
 if __name__ == "__main__":
     from lexer import Lexer
+
     unittest.main()

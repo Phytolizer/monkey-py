@@ -2,27 +2,31 @@ import unittest
 from tokens import TokenType, Token
 import tokens
 
+
 def is_letter(ch):
-    return 'a' <= ch and ch <= 'z' or 'A' <= ch and ch <= 'Z' or ch == '_'
+    return "a" <= ch and ch <= "z" or "A" <= ch and ch <= "Z" or ch == "_"
+
 
 def is_whitespace(ch):
-    return ch == ' ' or ch == '\t' or ch == '\r' or ch == '\n'
+    return ch == " " or ch == "\t" or ch == "\r" or ch == "\n"
+
 
 def is_digit(ch):
-    return '0' <= ch and ch <= '9'
+    return "0" <= ch and ch <= "9"
+
 
 class Lexer:
     def __init__(self, source):
         self.input = source
         self.position = 0
         self.read_position = 0
-        self.ch = '\0'
+        self.ch = "\0"
 
         self.read_char()
-    
+
     def read_char(self):
         if self.read_position >= len(self.input):
-            self.ch = '\0'
+            self.ch = "\0"
         else:
             self.ch = self.input[self.read_position]
         self.position = self.read_position
@@ -30,7 +34,7 @@ class Lexer:
 
     def peek_char(self):
         if self.read_position >= len(self.input):
-            return '\0'
+            return "\0"
         else:
             return self.input[self.read_position]
 
@@ -43,57 +47,57 @@ class Lexer:
         while is_letter(self.ch):
             self.read_char()
 
-        return self.input[position:self.position]
+        return self.input[position : self.position]
 
     def read_number(self):
         position = self.position
         while is_digit(self.ch):
             self.read_char()
 
-        return self.input[position:self.position]
-    
+        return self.input[position : self.position]
+
     def next_token(self):
         tok = Token(TokenType.Illegal, "")
 
         self.skip_whitespace()
 
-        if self.ch == '=':
-            if self.peek_char() == '=':
+        if self.ch == "=":
+            if self.peek_char() == "=":
                 self.read_char()
                 tok = Token(TokenType.Eq, "==")
             else:
                 tok = Token(TokenType.Assign, "=")
-        elif self.ch == '+':
+        elif self.ch == "+":
             tok = Token(TokenType.Plus, "+")
-        elif self.ch == ',':
+        elif self.ch == ",":
             tok = Token(TokenType.Comma, ",")
-        elif self.ch == ';':
+        elif self.ch == ";":
             tok = Token(TokenType.Semicolon, ";")
-        elif self.ch == '(':
+        elif self.ch == "(":
             tok = Token(TokenType.LParen, "(")
-        elif self.ch == ')':
+        elif self.ch == ")":
             tok = Token(TokenType.RParen, ")")
-        elif self.ch == '{':
+        elif self.ch == "{":
             tok = Token(TokenType.LBrace, "{")
-        elif self.ch == '}':
+        elif self.ch == "}":
             tok = Token(TokenType.RBrace, "}")
-        elif self.ch == '!':
-            if self.peek_char() == '=':
+        elif self.ch == "!":
+            if self.peek_char() == "=":
                 self.read_char()
                 tok = Token(TokenType.NotEq, "!=")
             else:
                 tok = Token(TokenType.Bang, "!")
-        elif self.ch == '-':
+        elif self.ch == "-":
             tok = Token(TokenType.Minus, "-")
-        elif self.ch == '*':
+        elif self.ch == "*":
             tok = Token(TokenType.Star, "*")
-        elif self.ch == '/':
+        elif self.ch == "/":
             tok = Token(TokenType.Slash, "/")
-        elif self.ch == '<':
+        elif self.ch == "<":
             tok = Token(TokenType.Less, "<")
-        elif self.ch == '>':
+        elif self.ch == ">":
             tok = Token(TokenType.Greater, ">")
-        elif self.ch == '\0':
+        elif self.ch == "\0":
             tok = Token(TokenType.Eof, "")
         elif is_letter(self.ch):
             tok.literal = self.read_identifier()
@@ -106,6 +110,7 @@ class Lexer:
 
         self.read_char()
         return tok
+
 
 class LexerTests(unittest.TestCase):
     def testNextToken(self):
@@ -210,6 +215,7 @@ class LexerTests(unittest.TestCase):
                 tok = l.next_token()
                 self.assertEqual(tok.type, test[0])
                 self.assertEqual(tok.literal, test[1])
+
 
 if __name__ == "__main__":
     unittest.main()

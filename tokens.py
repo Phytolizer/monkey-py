@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+
 class TokenType(Enum):
     Illegal = auto()
     Eof = auto()
@@ -35,10 +36,12 @@ class TokenType(Enum):
     LBrace = auto()
     RBrace = auto()
 
+
 class Token:
     def __init__(self, type=TokenType.Illegal, literal=""):
         self.type = type
         self.literal = literal
+
 
 KEYWORDS = {
     "fn": TokenType.Fn,
@@ -49,6 +52,7 @@ KEYWORDS = {
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
 }
+
 
 def lookup_ident(text):
     if text in KEYWORDS:
