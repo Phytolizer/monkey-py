@@ -203,3 +203,28 @@ class StringLiteral(Expression):
 
     def string(self):
         return self.value
+
+
+class ArrayLiteral(Expression):
+    def __init__(self, token, elements):
+        self.token = token
+        self.elements = elements
+
+    def token_literal(self):
+        return self.token.literal
+
+    def string(self):
+        return f"[{', '.join(map(lambda s: s.string(), self.elements))}]"
+
+
+class IndexExpression(Expression):
+    def __init__(self, token, left, index):
+        self.token = token
+        self.left = left
+        self.index = index
+
+    def token_literal(self):
+        return self.token.literal
+
+    def string(self):
+        return f"({self.left.string()}[{self.index.string()}])"

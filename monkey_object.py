@@ -11,6 +11,7 @@ class ObjectType(Enum):
     FUNCTION = auto()
     STRING = auto()
     BUILTIN = auto()
+    ARRAY = auto()
 
     def __str__(self):
         if self == ObjectType.INTEGER:
@@ -123,3 +124,14 @@ class Builtin(Object):
 
     def inspect(self):
         return "built-in function"
+
+
+class Array(Object):
+    def __init__(self, elements):
+        self.elements = elements
+
+    def type(self):
+        return ObjectType.ARRAY
+
+    def inspect(self):
+        return f"[{', '.join(map(lambda e: e.inspect(), self.elements))}]"

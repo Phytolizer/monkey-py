@@ -47,6 +47,19 @@ def eval_node(node, env):
         return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression, env)
+    elif isinstance(node, ast.IndexExpression):
+        left = eval_node(node.left, env)
+        if is_error(left):
+            return left
+        index = eval_node(node.index, env)
+        if is_error(index):
+            return index
+        return eval_index_expression(left, index)
+    elif isinstance(node, ast.ArrayLiteral):
+        elements = eval_expressions(node.elements, env)
+        if len(elements) == 1 and is_error(elements[0]):
+            return elements[0]
+        return monkey_object.Array(elements)
     elif isinstance(node, ast.CallExpression):
         function = eval_node(node.function, env)
         if is_error(function):
@@ -264,3 +277,22 @@ def unwrap_return_value(obj):
     if isinstance(obj, monkey_object.ReturnValue):
         return obj.value
     return obj
+
+
+def eval_index_expression(left, index):
+    if (
+        left.type() == monkey_object.ObjectType.ARRAY
+        and index.type() == monkey_object.ObjectType.INTEGER
+    ):
+        return eval_array_index_expression(left, index)
+    else:
+        return monkey_object.Error(f"index operator not supported: {left.type()}")
+
+
+def eval_array_index_expression(array, index):
+    idx = index.value
+    max = len(array.elements) - 1
+    if idx < 0 or idx > max:
+        return NULL
+
+    return array.elements[idx]

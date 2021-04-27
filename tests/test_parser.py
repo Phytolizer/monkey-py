@@ -327,3 +327,30 @@ class TestParser:
         exp = stmt.expression
         assert isinstance(exp, ast.StringLiteral)
         assert exp.value == "foobar"
+
+    def test_array_literal(self):
+        text = "[1, 2 * 2, 3 + 3]"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        assert isinstance(program.statements[0], ast.ExpressionStatement)
+        assert isinstance(program.statements[0].expression, ast.ArrayLiteral)
+        array = program.statements[0].expression
+        assert len(array.elements) == 3
+        self.check_integer_literal(array.elements[0], 1)
+        self.check_infix_expression(array.elements[1], 2, "*", 2)
+        self.check_infix_expression(array.elements[2], 3, "+", 3)
+
+    def test_index_expression(self):
+        text = "myArray[1 + 1]"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        index_exp = stmt.expression
+        assert isinstance(index_exp, ast.IndexExpression)
+        self.check_identifier(index_exp.left, "myArray")
+        self.check_infix_expression(index_exp.index, 1, "+", 1)

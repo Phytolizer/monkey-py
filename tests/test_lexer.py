@@ -4,7 +4,7 @@ import pytest
 
 
 class TestLexer:
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="class")
     def lexer(self):
         text = """
             let five = 5;
@@ -26,6 +26,7 @@ class TestLexer:
             10 != 9;
             "foobar"
             "foo bar"
+            [1, 2];
         """
         return Lexer(text)
 
@@ -107,6 +108,12 @@ class TestLexer:
             (TokenType.Semicolon, ";"),
             (TokenType.String, "foobar"),
             (TokenType.String, "foo bar"),
+            (TokenType.LBracket, "["),
+            (TokenType.Num, "1"),
+            (TokenType.Comma, ","),
+            (TokenType.Num, "2"),
+            (TokenType.RBracket, "]"),
+            (TokenType.Semicolon, ";"),
             (TokenType.Eof, ""),
         ],
     )

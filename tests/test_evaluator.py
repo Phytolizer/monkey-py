@@ -245,3 +245,64 @@ class TestEvaluator:
         elif isinstance(expected, str):
             assert isinstance(evaluated, monkey_object.Error)
             assert evaluated.message == expected
+
+    def test_array_literal(self):
+        text = "[1, 2 * 2, 3 + 3]"
+        evaluated = self.eval_setup(text)
+        assert isinstance(evaluated, monkey_object.Array)
+        assert len(evaluated.elements) == 3
+        self.check_integer_object(evaluated.elements[0], 1)
+        self.check_integer_object(evaluated.elements[1], 4)
+        self.check_integer_object(evaluated.elements[2], 6)
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            (
+                "[1, 2, 3][0]",
+                1,
+            ),
+            (
+                "[1, 2, 3][1]",
+                2,
+            ),
+            (
+                "[1, 2, 3][2]",
+                3,
+            ),
+            (
+                "let i = 0; [1][i];",
+                1,
+            ),
+            (
+                "[1, 2, 3][1 + 1];",
+                3,
+            ),
+            (
+                "let myArray = [1, 2, 3]; myArray[2];",
+                3,
+            ),
+            (
+                "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+                6,
+            ),
+            (
+                "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+                2,
+            ),
+            (
+                "[1, 2, 3][3]",
+                None,
+            ),
+            (
+                "[1, 2, 3][-1]",
+                None,
+            ),
+        ],
+    )
+    def test_array_index_expressions(self, text, expected):
+        evaluated = self.eval_setup(text)
+        if isinstance(expected, int):
+            self.check_integer_object(evaluated, expected)
+        else:
+            self.check_null_object(evaluated)

@@ -106,6 +106,10 @@ class Lexer:
             tok = Token(TokenType.Greater, ">")
         elif self.ch == '"':
             tok = Token(TokenType.String, self.read_string())
+        elif self.ch == "[":
+            tok = Token(TokenType.LBracket, "[")
+        elif self.ch == "]":
+            tok = Token(TokenType.RBracket, "]")
         elif self.ch == "\0":
             tok = Token(TokenType.Eof, "")
         elif is_letter(self.ch):

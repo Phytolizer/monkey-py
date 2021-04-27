@@ -11,6 +11,7 @@ class Precedence(IntEnum):
     PRODUCT = auto()
     PREFIX = auto()
     CALL = auto()
+    INDEX = auto()
 
 
 PRECEDENCES = {
@@ -23,6 +24,7 @@ PRECEDENCES = {
     TokenType.Star: Precedence.PRODUCT,
     TokenType.Slash: Precedence.PRODUCT,
     TokenType.LParen: Precedence.CALL,
+    TokenType.LBracket: Precedence.INDEX,
 }
 
 
@@ -47,6 +49,7 @@ class Parser:
         self.register_prefix(TokenType.If, self.parse_if_expression)
         self.register_prefix(TokenType.Fn, self.parse_function_literal)
         self.register_prefix(TokenType.String, self.parse_string_literal)
+        self.register_prefix(TokenType.LBracket, self.parse_array_literal)
 
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -57,6 +60,7 @@ class Parser:
         self.register_infix(TokenType.Less, self.parse_infix_expression)
         self.register_infix(TokenType.Greater, self.parse_infix_expression)
         self.register_infix(TokenType.LParen, self.parse_call_expression)
+        self.register_infix(TokenType.LBracket, self.parse_index_expression)
 
     def peek_precedence(self):
         try:
@@ -184,23 +188,8 @@ class Parser:
 
     def parse_call_expression(self, function):
         token = self.cur_token
-        arguments = self.parse_call_arguments()
+        arguments = self.parse_expression_list(TokenType.RParen)
         return ast.CallExpression(token, function, arguments)
-
-    def parse_call_arguments(self):
-        args = []
-        if self.peek_token_is(TokenType.RParen):
-            self.next_token()
-            return args
-        self.next_token()
-        args.append(self.parse_expression(Precedence.LOWEST))
-        while self.peek_token_is(TokenType.Comma):
-            self.next_token()
-            self.next_token()
-            args.append(self.parse_expression(Precedence.LOWEST))
-        if not self.expect_peek(TokenType.RParen):
-            return None
-        return args
 
     def parse_function_literal(self):
         token = self.cur_token
@@ -312,3 +301,33 @@ class Parser:
 
     def parse_string_literal(self):
         return ast.StringLiteral(self.cur_token, self.cur_token.literal)
+
+    def parse_expression_list(self, end):
+        list = []
+        if self.peek_token_is(end):
+            self.next_token()
+            return list
+
+        self.next_token()
+        list.append(self.parse_expression(Precedence.LOWEST))
+        while self.peek_token_is(TokenType.Comma):
+            self.next_token()
+            self.next_token()
+            list.append(self.parse_expression(Precedence.LOWEST))
+
+        if not self.expect_peek(end):
+            return None
+        return list
+
+    def parse_array_literal(self):
+        token = self.cur_token
+        elements = self.parse_expression_list(TokenType.RBracket)
+        return ast.ArrayLiteral(token, elements)
+    
+    def parse_index_expression(self, left):
+        token = self.cur_token
+        self.next_token()
+        index = self.parse_expression(Precedence.LOWEST)
+        if not self.expect_peek(TokenType.RBracket):
+            return None
+        return ast.IndexExpression(token, left, index)

@@ -36,6 +36,8 @@ class TokenType(Enum):
     RParen = auto()
     LBrace = auto()
     RBrace = auto()
+    LBracket = auto()
+    RBracket = auto()
 
 
 class Token:
