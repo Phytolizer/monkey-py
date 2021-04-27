@@ -164,6 +164,10 @@ class TestEvaluator:
                 '"Hello" - "World"',
                 "unknown operator: STRING - STRING",
             ),
+            (
+                '{"name": "Monkey"}[fn(x) { x }];',
+                "unusable as hash key: FUNCTION",
+            )
         ],
     )
     def test_error_handling(self, text, expected):
@@ -301,6 +305,75 @@ class TestEvaluator:
         ],
     )
     def test_array_index_expressions(self, text, expected):
+        evaluated = self.eval_setup(text)
+        if isinstance(expected, int):
+            self.check_integer_object(evaluated, expected)
+        else:
+            self.check_null_object(evaluated)
+
+    def test_hash_literals(self):
+        text = """
+            let two = "two";
+            {
+                "one": 10 - 9,
+                two: 1 + 1,
+                "thr" + "ee": 6 / 2,
+                4: 4,
+                true: 5,
+                false: 6
+            }
+        """
+        evaluated = self.eval_setup(text)
+        if isinstance(evaluated, monkey_object.Error):
+            print(f"ERROR: {evaluated.message}")
+        assert isinstance(evaluated, monkey_object.Hash)
+        expected = {
+            monkey_object.String("one").hash_key(): 1,
+            monkey_object.String("two").hash_key(): 2,
+            monkey_object.String("three").hash_key(): 3,
+            monkey_object.Integer(4).hash_key(): 4,
+            TRUE.hash_key(): 5,
+            FALSE.hash_key(): 6,
+        }
+        assert len(evaluated.pairs) == len(expected)
+        for expected_pair in evaluated.pairs.values():
+            pair = evaluated.pairs[expected_pair.key.hash_key()]
+            self.check_integer_object(pair.value, expected_pair.value.value)
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            (
+                '{"foo": 5}["foo"]',
+                5,
+            ),
+            (
+                '{"foo": 5}["bar"]',
+                None,
+            ),
+            (
+                'let key = "foo"; {"foo": 5}[key]',
+                5,
+            ),
+            (
+                '{}["foo"]',
+                None,
+            ),
+            (
+                "{5: 5}[5]",
+                5,
+            ),
+            (
+                "{true: 5}[true]",
+                5,
+            ),
+            (
+                "{false: 5}[false]",
+                5,
+            ),
+        ],
+    )
+    def test_hash_index_expressions(self, text, expected):
         evaluated = self.eval_setup(text)
         if isinstance(expected, int):
             self.check_integer_object(evaluated, expected)

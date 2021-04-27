@@ -110,6 +110,8 @@ class Lexer:
             tok = Token(TokenType.LBracket, "[")
         elif self.ch == "]":
             tok = Token(TokenType.RBracket, "]")
+        elif self.ch == ":":
+            tok = Token(TokenType.Colon, ":")
         elif self.ch == "\0":
             tok = Token(TokenType.Eof, "")
         elif is_letter(self.ch):

@@ -19,6 +19,7 @@ class TokenType(Enum):
 
     Comma = auto()
     Semicolon = auto()
+    Colon = auto()
 
     Assign = auto()
     Plus = auto()

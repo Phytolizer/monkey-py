@@ -1,5 +1,5 @@
 from lexer import Lexer
-from tokens import TokenType
+from tokens import Token, TokenType
 import pytest
 
 
@@ -27,6 +27,7 @@ class TestLexer:
             "foobar"
             "foo bar"
             [1, 2];
+            {"foo": "bar"}
         """
         return Lexer(text)
 
@@ -114,6 +115,11 @@ class TestLexer:
             (TokenType.Num, "2"),
             (TokenType.RBracket, "]"),
             (TokenType.Semicolon, ";"),
+            (TokenType.LBrace, "{"),
+            (TokenType.String, "foo"),
+            (TokenType.Colon, ":"),
+            (TokenType.String, "bar"),
+            (TokenType.RBrace, "}"),
             (TokenType.Eof, ""),
         ],
     )

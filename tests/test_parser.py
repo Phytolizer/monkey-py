@@ -354,3 +354,98 @@ class TestParser:
         assert isinstance(index_exp, ast.IndexExpression)
         self.check_identifier(index_exp.left, "myArray")
         self.check_infix_expression(index_exp.index, 1, "+", 1)
+
+    def test_hash_literals_string_keys(self):
+        text = '{"one": 1, "two": 2, "three": 3}'
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        hash = stmt.expression
+        assert isinstance(hash, ast.HashLiteral)
+        assert len(hash.pairs) == 3
+        expected = {
+            "one": 1,
+            "two": 2,
+            "three": 3,
+        }
+        for key, value in hash.pairs.items():
+            assert isinstance(key, ast.StringLiteral)
+            expected_value = expected[key.string()]
+            self.check_integer_literal(value, expected_value)
+
+    def test_hash_literals_integer_keys(self):
+        text = "{2: 1, 1: 2, 3: 3}"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        hash = stmt.expression
+        assert isinstance(hash, ast.HashLiteral)
+        assert len(hash.pairs) == 3
+        expected = {
+            2: 1,
+            1: 2,
+            3: 3,
+        }
+        for key, value in hash.pairs.items():
+            assert isinstance(key, ast.IntegerLiteral)
+            expected_value = expected[key.value]
+            self.check_integer_literal(value, expected_value)
+
+    def test_hash_literals_boolean_keys(self):
+        text = "{true: 1, false: 2}"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        hash = stmt.expression
+        assert isinstance(hash, ast.HashLiteral)
+        assert len(hash.pairs) == 2
+        expected = {
+            True: 1,
+            False: 2,
+        }
+        for key, value in hash.pairs.items():
+            assert isinstance(key, ast.Boolean)
+            expected_value = expected[key.value]
+            self.check_integer_literal(value, expected_value)
+
+    def test_empty_hash_literal(self):
+        text = "{}"
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        hash = stmt.expression
+        assert isinstance(hash, ast.HashLiteral)
+        assert len(hash.pairs) == 0
+
+    def test_hash_literals_with_expressions(self):
+        text = '{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}'
+        l = Lexer(text)
+        p = Parser(l)
+        program = p.parse_program()
+        self.check_parser_errors(p)
+        stmt = program.statements[0]
+        assert isinstance(stmt, ast.ExpressionStatement)
+        hash = stmt.expression
+        assert isinstance(hash, ast.HashLiteral)
+        assert len(hash.pairs) == 3
+        tests = {
+            "one": lambda e: self.check_infix_expression(e, 0, "+", 1),
+            "two": lambda e: self.check_infix_expression(e, 10, "-", 8),
+            "three": lambda e: self.check_infix_expression(e, 15, "/", 5),
+        }
+        for key, value in hash.pairs.items():
+            assert isinstance(key, ast.StringLiteral)
+            test_func = tests[key.string()]
+            test_func(value)

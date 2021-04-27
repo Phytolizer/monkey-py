@@ -50,6 +50,7 @@ class Parser:
         self.register_prefix(TokenType.Fn, self.parse_function_literal)
         self.register_prefix(TokenType.String, self.parse_string_literal)
         self.register_prefix(TokenType.LBracket, self.parse_array_literal)
+        self.register_prefix(TokenType.LBrace, self.parse_hash_literal)
 
         self.register_infix(TokenType.Plus, self.parse_infix_expression)
         self.register_infix(TokenType.Minus, self.parse_infix_expression)
@@ -323,7 +324,7 @@ class Parser:
         token = self.cur_token
         elements = self.parse_expression_list(TokenType.RBracket)
         return ast.ArrayLiteral(token, elements)
-    
+
     def parse_index_expression(self, left):
         token = self.cur_token
         self.next_token()
@@ -331,3 +332,23 @@ class Parser:
         if not self.expect_peek(TokenType.RBracket):
             return None
         return ast.IndexExpression(token, left, index)
+
+    def parse_hash_literal(self):
+        token = self.cur_token
+        pairs = dict()
+        while not self.peek_token_is(TokenType.RBrace):
+            self.next_token()
+            key = self.parse_expression(Precedence.LOWEST)
+            if not self.expect_peek(TokenType.Colon):
+                return None
+            self.next_token()
+            value = self.parse_expression(Precedence.LOWEST)
+            pairs[key] = value
+            if not self.peek_token_is(TokenType.RBrace) and not self.expect_peek(
+                TokenType.Comma
+            ):
+                return None
+        if not self.expect_peek(TokenType.RBrace):
+            return None
+
+        return ast.HashLiteral(token, pairs)

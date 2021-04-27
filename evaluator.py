@@ -121,6 +121,8 @@ def eval_node(node, env):
         return monkey_object.ReturnValue(val)
     elif isinstance(node, ast.ExpressionStatement):
         return eval_node(node.expression, env)
+    elif isinstance(node, ast.HashLiteral):
+        return eval_hash_literal(node, env)
     elif isinstance(node, ast.IndexExpression):
         left = eval_node(node.left, env)
         if is_error(left):
@@ -359,6 +361,8 @@ def eval_index_expression(left, index):
         and index.type() == monkey_object.ObjectType.INTEGER
     ):
         return eval_array_index_expression(left, index)
+    elif left.type() == monkey_object.ObjectType.HASH:
+        return eval_hash_index_expression(left, index)
     else:
         return monkey_object.Error(f"index operator not supported: {left.type()}")
 
@@ -370,3 +374,32 @@ def eval_array_index_expression(array, index):
         return NULL
 
     return array.elements[idx]
+
+
+def eval_hash_index_expression(hash, index):
+    if not isinstance(index, monkey_object.Hashable):
+        return monkey_object.Error(f"unusable as hash key: {index.type()}")
+    try:
+        return hash.pairs[index.hash_key()].value
+    except KeyError:
+        return NULL
+
+
+def eval_hash_literal(node, env):
+    pairs = dict()
+    for key_node, value_node in node.pairs.items():
+        key = eval_node(key_node, env)
+        if is_error(key):
+            return key
+
+        if not isinstance(key, monkey_object.Hashable):
+            return monkey_object.Error(f"unusable as hash key: {key.type()}")
+
+        value = eval_node(value_node, env)
+        if is_error(value):
+            return value
+
+        hashed = key.hash_key()
+        pairs[hashed] = monkey_object.HashPair(key, value)
+
+    return monkey_object.Hash(pairs)

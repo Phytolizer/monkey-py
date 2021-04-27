@@ -1,5 +1,8 @@
 from abc import abstractmethod, ABC
 from enum import Enum, auto
+from dataclasses import dataclass
+import hashlib
+import struct
 
 
 class ObjectType(Enum):
@@ -12,6 +15,7 @@ class ObjectType(Enum):
     STRING = auto()
     BUILTIN = auto()
     ARRAY = auto()
+    HASH = auto()
 
     def __str__(self):
         if self == ObjectType.INTEGER:
@@ -22,6 +26,8 @@ class ObjectType(Enum):
             return "NULL"
         elif self == ObjectType.STRING:
             return "STRING"
+        elif self == ObjectType.FUNCTION:
+            return "FUNCTION"
         else:
             raise Exception("unexpected type for __str__")
 
@@ -36,7 +42,19 @@ class Object(ABC):
         pass
 
 
-class Integer(Object):
+class Hashable(ABC):
+    @abstractmethod
+    def hash_key(self):
+        pass
+
+
+@dataclass(init=True, frozen=True)
+class HashKey:
+    type: ObjectType
+    value: int
+
+
+class Integer(Object, Hashable):
     def __init__(self, value):
         self.value = value
 
@@ -46,8 +64,11 @@ class Integer(Object):
     def inspect(self):
         return str(self.value)
 
+    def hash_key(self):
+        return HashKey(self.type(), self.value)
 
-class Boolean(Object):
+
+class Boolean(Object, Hashable):
     def __init__(self, value):
         self.value = value
 
@@ -59,6 +80,9 @@ class Boolean(Object):
             return "true"
         else:
             return "false"
+
+    def hash_key(self):
+        return HashKey(self.type(), int(self.value))
 
 
 class Null(Object):
@@ -104,7 +128,7 @@ class Function(Object):
         return f"fn({self.parameters.join(', ')}) {{\n{self.body.string()}\n}}"
 
 
-class String(Object):
+class String(Object, Hashable):
     def __init__(self, value):
         self.value = value
 
@@ -113,6 +137,12 @@ class String(Object):
 
     def inspect(self):
         return self.value
+
+    def hash_key(self):
+        hasher = hashlib.shake_128()
+        hasher.update(self.value.encode("utf-8"))
+        bin = hasher.digest(4)
+        return HashKey(self.type(), struct.unpack("<L", bin)[0])
 
 
 class Builtin(Object):
@@ -135,3 +165,23 @@ class Array(Object):
 
     def inspect(self):
         return f"[{', '.join(map(lambda e: e.inspect(), self.elements))}]"
+
+
+@dataclass(init=True, frozen=True)
+class HashPair:
+    key: Object
+    value: Object
+
+
+class Hash(Object):
+    def __init__(self, pairs):
+        self.pairs = pairs
+
+    def type(self):
+        return ObjectType.HASH
+
+    def inspect(self):
+        pairs = []
+        for pair in self.pairs.values():
+            pairs.append(f"{pair.key.inspect()}: {pair.value.inspect()}")
+        return f"{{{', '.join(pairs)}}}"
