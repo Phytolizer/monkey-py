@@ -15,14 +15,88 @@ def monkey_len(args):
 
     if isinstance(args[0], monkey_object.String):
         return monkey_object.Integer(len(args[0].value))
+    elif isinstance(args[0], monkey_object.Array):
+        return monkey_object.Integer(len(args[0].elements))
     else:
         return monkey_object.Error(
             f"argument to `len` not supported, got {args[0].type()}"
         )
 
 
+def monkey_first(args):
+    if len(args) != 1:
+        return monkey_object.Error(
+            f"wrong number of arguments. got={len(args)}, want=1"
+        )
+
+    if not isinstance(args[0], monkey_object.Array):
+        return monkey_object.Error(
+            f"argument to `first` must be ARRAY, got {args[0].type()}"
+        )
+
+    arr = args[0]
+    if len(arr.elements) > 0:
+        return arr.elements[0]
+
+    return NULL
+
+
+def monkey_last(args):
+    if len(args) != 1:
+        return monkey_object.Error(
+            f"wrong number of arguments. got={len(args)}, want=1"
+        )
+
+    if not isinstance(args[0], monkey_object.Array):
+        return monkey_object.Error(
+            f"argument to `first` must be ARRAY, got {args[0].type()}"
+        )
+
+    arr = args[0]
+    if len(arr.elements) > 0:
+        return arr.elements[-1]
+
+    return NULL
+
+
+def monkey_rest(args):
+    if len(args) != 1:
+        return monkey_object.Error(
+            f"wrong number of arguments. got={len(args)}, want=1"
+        )
+    if args[0].type() != monkey_object.ObjectType.ARRAY:
+        return monkey_object.Error(
+            f"argument to `rest` must be ARRAY, got {args[0].type()}"
+        )
+    arr = args[0]
+    length = len(arr.elements)
+    if length > 0:
+        newElements = arr.elements[1:length]
+        return monkey_object.Array(newElements)
+
+    return NULL
+
+
+def monkey_push(args):
+    if len(args) != 2:
+        return monkey_object.Error(
+            f"wrong number of arguments. got={len(args)}, want=2"
+        )
+    if args[0].type() != monkey_object.ObjectType.ARRAY:
+        return monkey_object.Error(
+            f"argument to `push` must be ARRAY, got {args[0].type()}"
+        )
+    arr = args[0]
+    newElements = [*arr.elements, args[1]]
+    return monkey_object.Array(newElements)
+
+
 BUILTINS = {
     "len": monkey_object.Builtin(monkey_len),
+    "first": monkey_object.Builtin(monkey_first),
+    "last": monkey_object.Builtin(monkey_last),
+    "rest": monkey_object.Builtin(monkey_rest),
+    "push": monkey_object.Builtin(monkey_push),
 }
 
 
