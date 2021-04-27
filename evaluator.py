@@ -91,12 +91,19 @@ def monkey_push(args):
     return monkey_object.Array(newElements)
 
 
+def monkey_puts(args):
+    for arg in args:
+        print(arg.inspect())
+    return NULL
+
+
 BUILTINS = {
     "len": monkey_object.Builtin(monkey_len),
     "first": monkey_object.Builtin(monkey_first),
     "last": monkey_object.Builtin(monkey_last),
     "rest": monkey_object.Builtin(monkey_rest),
     "push": monkey_object.Builtin(monkey_push),
+    "puts": monkey_object.Builtin(monkey_puts),
 }
 
 
