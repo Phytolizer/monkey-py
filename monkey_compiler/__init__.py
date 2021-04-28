@@ -37,6 +37,7 @@ class Compiler:
                 self.compile(s)
         elif isinstance(node, ast.ExpressionStatement):
             self.compile(node.expression)
+            self._emit(code.Opcode.POP)
         elif isinstance(node, ast.InfixExpression):
             self.compile(node.left)
             self.compile(node.right)

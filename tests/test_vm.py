@@ -25,7 +25,7 @@ def run_vm_test(input: str, expected: Any):
     comp.compile(program)
     vm = VM(comp.bytecode())
     vm.run()
-    stack_elem = vm.stack_top()
+    stack_elem = vm.last_popped_stack_elem()
     check_expected_object(expected, stack_elem)
 
 

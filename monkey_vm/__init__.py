@@ -36,6 +36,9 @@ class VM:
         self._sp -= 1
         return o
 
+    def last_popped_stack_elem(self):
+        return self._stack[self._sp]
+
     def run(self):
         ip = 0
         while ip < len(self._instructions):
@@ -51,6 +54,8 @@ class VM:
                 left = self.pop()
                 result = left.value + right.value
                 self.push(object.Integer(result))
+            elif op == code.Opcode.POP:
+                self.pop()
             ip += 1
 
         return None

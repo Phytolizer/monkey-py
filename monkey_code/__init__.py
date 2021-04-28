@@ -1,13 +1,15 @@
 import struct
 from typing import List, NewType
-from enum import IntEnum
+from enum import IntEnum, auto
 from dataclasses import dataclass
 from struct import pack
 
 
 class Opcode(IntEnum):
-    CONSTANT = 0
-    ADD = 1
+    CONSTANT = auto()
+    ADD = auto()
+
+    POP = auto()
 
 
 @dataclass
@@ -60,6 +62,7 @@ class Instructions:
 _definitions = {
     Opcode.CONSTANT: Definition("OpConstant", [2]),
     Opcode.ADD: Definition("OpAdd", []),
+    Opcode.POP: Definition("OpPop", []),
 }
 
 

@@ -27,7 +27,7 @@ class TestCompiler:
         self, expected: List[code.Instructions], actual: code.Instructions
     ):
         concatted = self.concat_instructions(expected)
-        assert len(code.Instructions(actual)) == len(concatted)
+        assert str(code.Instructions(actual)) == str(concatted)
         for a, ins in zip(actual, concatted):
             assert a == ins
 
@@ -55,8 +55,19 @@ class TestCompiler:
                     code.make(code.Opcode.CONSTANT, 0),
                     code.make(code.Opcode.CONSTANT, 1),
                     code.make(code.Opcode.ADD),
+                    code.make(code.Opcode.POP),
                 ],
-            )
+            ),
+            (
+                "1; 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.POP),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
         ],
     )
     def test_integer_arithmetic(self, input, expected_constants, expected_instructions):
