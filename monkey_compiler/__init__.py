@@ -54,6 +54,11 @@ class Compiler:
         elif isinstance(node, ast.IntegerLiteral):
             integer = object.Integer(node.value)
             self._emit(code.Opcode.CONSTANT, self._add_constant(integer))
+        elif isinstance(node, ast.Boolean):
+            if node.value:
+                self._emit(code.Opcode.TRUE)
+            else:
+                self._emit(code.Opcode.FALSE)
 
     def bytecode(self):
         return Bytecode(self._instructions, self._constants)

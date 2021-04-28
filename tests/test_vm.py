@@ -19,6 +19,11 @@ def check_integer_object(expected: int, actual: object.Object):
     assert actual.value == expected
 
 
+def check_boolean_object(expected: bool, actual: object.Object):
+    assert isinstance(actual, object.Boolean)
+    assert actual.value == expected
+
+
 def run_vm_test(input: str, expected: Any):
     program = parse(input)
     comp = compiler.Compiler()
@@ -30,7 +35,9 @@ def run_vm_test(input: str, expected: Any):
 
 
 def check_expected_object(expected: Any, actual: object.Object):
-    if isinstance(expected, int):
+    if isinstance(expected, bool):
+        check_boolean_object(expected, actual)
+    elif isinstance(expected, int):
         check_integer_object(expected, actual)
 
 
@@ -51,5 +58,16 @@ def check_expected_object(expected: Any, actual: object.Object):
         ("5 * (2 + 10)", 60),
     ],
 )
-def test_integer_arithmetic(input, expected):
+def test_integer_arithmetic(input: str, expected: int):
+    run_vm_test(input, expected)
+
+
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        ("true", True),
+        ("false", False),
+    ],
+)
+def test_boolean_expression(input: str, expected: bool):
     run_vm_test(input, expected)

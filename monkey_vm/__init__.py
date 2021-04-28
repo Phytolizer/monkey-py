@@ -5,6 +5,8 @@ import monkey_object as object
 import monkey_code as code
 
 STACK_SIZE = 2048
+TRUE = object.Boolean(True)
+FALSE = object.Boolean(False)
 
 
 @dataclass
@@ -78,6 +80,10 @@ class VM:
                 )
                 ip += 2
                 self.push(self._constants[const_index])
+            elif op == code.Opcode.TRUE:
+                self.push(TRUE)
+            elif op == code.Opcode.FALSE:
+                self.push(FALSE)
             elif op in (
                 code.Opcode.ADD,
                 code.Opcode.SUB,

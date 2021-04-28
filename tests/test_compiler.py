@@ -102,3 +102,27 @@ class TestCompiler:
     )
     def test_integer_arithmetic(self, input, expected_constants, expected_instructions):
         self.run_compiler_test(input, expected_constants, expected_instructions)
+
+    @pytest.mark.parametrize(
+        "input,expected_constants,expected_instructions",
+        [
+            (
+                "true",
+                [],
+                [
+                    code.make(code.Opcode.TRUE),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "false",
+                [],
+                [
+                    code.make(code.Opcode.FALSE),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+        ],
+    )
+    def test_boolean_expression(self, input, expected_constants, expected_instructions):
+        self.run_compiler_test(input, expected_constants, expected_instructions)

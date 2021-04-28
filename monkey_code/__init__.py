@@ -7,6 +7,10 @@ from struct import pack
 
 class Opcode(IntEnum):
     CONSTANT = auto()
+
+    TRUE = auto()
+    FALSE = auto()
+
     ADD = auto()
     SUB = auto()
     MUL = auto()
@@ -64,6 +68,8 @@ class Instructions:
 
 _definitions = {
     Opcode.CONSTANT: Definition("OpConstant", [2]),
+    Opcode.TRUE: Definition("OpTrue", []),
+    Opcode.FALSE: Definition("OpFalse", []),
     Opcode.ADD: Definition("OpAdd", []),
     Opcode.SUB: Definition("OpSub", []),
     Opcode.MUL: Definition("OpMul", []),
