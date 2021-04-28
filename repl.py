@@ -37,5 +37,5 @@ if __name__ == "__main__":
         except RuntimeError as e:
             print(f"executing bytecode failed: {e}")
             continue
-        stack_top = machine.stack_top()
+        stack_top = machine.last_popped_stack_elem()
         print(stack_top.inspect())
