@@ -6,7 +6,10 @@ import pytest
 class TestCode:
     @pytest.mark.parametrize(
         "op,operands,expected",
-        [(Opcode.CONSTANT, [0xFFFE], bytes([Opcode.CONSTANT, 0xFF, 0xFE]))],
+        [
+            (Opcode.CONSTANT, [0xFFFE], bytes([Opcode.CONSTANT, 0xFF, 0xFE])),
+            (Opcode.ADD, [], bytes([Opcode.ADD])),
+        ],
     )
     def test_make(self, op, operands, expected):
         instruction = make(op, *operands)
@@ -17,14 +20,14 @@ class TestCode:
     def test_instructions_string(self):
         instructions = Instructions(
             [
-                make(Opcode.CONSTANT, 1),
+                make(Opcode.ADD),
                 make(Opcode.CONSTANT, 2),
                 make(Opcode.CONSTANT, 65535),
             ]
         )
-        expected = """0000 OpConstant 1
-0003 OpConstant 2
-0006 OpConstant 65535
+        expected = """0000 OpAdd
+0001 OpConstant 2
+0004 OpConstant 65535
 """
         concatted = []
         for ins in instructions:

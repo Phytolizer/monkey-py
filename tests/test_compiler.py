@@ -27,7 +27,7 @@ class TestCompiler:
         self, expected: List[code.Instructions], actual: code.Instructions
     ):
         concatted = self.concat_instructions(expected)
-        assert len(actual) == len(concatted)
+        assert len(code.Instructions(actual)) == len(concatted)
         for a, ins in zip(actual, concatted):
             assert a == ins
 
@@ -54,6 +54,7 @@ class TestCompiler:
                 [
                     code.make(code.Opcode.CONSTANT, 0),
                     code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.ADD),
                 ],
             )
         ],

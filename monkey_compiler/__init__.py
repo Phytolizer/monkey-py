@@ -40,6 +40,10 @@ class Compiler:
         elif isinstance(node, ast.InfixExpression):
             self.compile(node.left)
             self.compile(node.right)
+            if node.operator == "+":
+                self._emit(code.Opcode.ADD)
+            else:
+                raise RuntimeError(f"unknown operator {node.operator}")
         elif isinstance(node, ast.IntegerLiteral):
             integer = object.Integer(node.value)
             self._emit(code.Opcode.CONSTANT, self._add_constant(integer))

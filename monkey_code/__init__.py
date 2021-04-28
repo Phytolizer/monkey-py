@@ -7,6 +7,7 @@ from struct import pack
 
 class Opcode(IntEnum):
     CONSTANT = 0
+    ADD = 1
 
 
 @dataclass
@@ -49,13 +50,16 @@ class Instructions:
         operand_count = len(d.operand_widths)
         if len(operands) != operand_count:
             return f"ERROR: operand len {len(operands)} does not match defined {operand_count}\n"
-        if operand_count == 1:
+        if operand_count == 0:
+            return d.name
+        elif operand_count == 1:
             return f"{d.name} {operands[0]}"
         return f"ERROR: unhandled operand_count for {d.name}\n"
 
 
 _definitions = {
     Opcode.CONSTANT: Definition("OpConstant", [2]),
+    Opcode.ADD: Definition("OpAdd", []),
 }
 
 
