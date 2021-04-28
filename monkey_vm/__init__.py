@@ -39,6 +39,35 @@ class VM:
     def last_popped_stack_elem(self):
         return self._stack[self._sp]
 
+    def execute_binary_integer_operation(
+        self, op: code.Opcode, left: object.Object, right: object.Object
+    ):
+        result = None
+        if op == code.Opcode.ADD:
+            result = left.value + right.value
+        elif op == code.Opcode.SUB:
+            result = left.value - right.value
+        elif op == code.Opcode.MUL:
+            result = left.value * right.value
+        elif op == code.Opcode.DIV:
+            result = left.value // right.value
+        else:
+            raise RuntimeError(f"unknown integer operator: {op}")
+        return self.push(object.Integer(result))
+
+    def execute_binary_operation(self, op: code.Opcode):
+        right = self.pop()
+        left = self.pop()
+        if (
+            left.type() == object.ObjectType.INTEGER
+            and right.type() == object.ObjectType.INTEGER
+        ):
+            return self.execute_binary_integer_operation(op, left, right)
+
+        raise RuntimeError(
+            f"unsupported types for binary operation: {left.type()}, {right.type()}"
+        )
+
     def run(self):
         ip = 0
         while ip < len(self._instructions):
@@ -49,11 +78,13 @@ class VM:
                 )
                 ip += 2
                 self.push(self._constants[const_index])
-            elif op == code.Opcode.ADD:
-                right = self.pop()
-                left = self.pop()
-                result = left.value + right.value
-                self.push(object.Integer(result))
+            elif op in (
+                code.Opcode.ADD,
+                code.Opcode.SUB,
+                code.Opcode.MUL,
+                code.Opcode.DIV,
+            ):
+                self.execute_binary_operation(op)
             elif op == code.Opcode.POP:
                 self.pop()
             ip += 1

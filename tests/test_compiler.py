@@ -68,6 +68,36 @@ class TestCompiler:
                     code.make(code.Opcode.POP),
                 ],
             ),
+            (
+                "1 - 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.SUB),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "1 * 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.MUL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "2 / 1",
+                [2, 1],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.DIV),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
         ],
     )
     def test_integer_arithmetic(self, input, expected_constants, expected_instructions):

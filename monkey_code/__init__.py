@@ -8,6 +8,9 @@ from struct import pack
 class Opcode(IntEnum):
     CONSTANT = auto()
     ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
 
     POP = auto()
 
@@ -62,6 +65,9 @@ class Instructions:
 _definitions = {
     Opcode.CONSTANT: Definition("OpConstant", [2]),
     Opcode.ADD: Definition("OpAdd", []),
+    Opcode.SUB: Definition("OpSub", []),
+    Opcode.MUL: Definition("OpMul", []),
+    Opcode.DIV: Definition("OpDiv", []),
     Opcode.POP: Definition("OpPop", []),
 }
 

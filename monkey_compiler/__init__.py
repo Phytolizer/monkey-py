@@ -43,6 +43,12 @@ class Compiler:
             self.compile(node.right)
             if node.operator == "+":
                 self._emit(code.Opcode.ADD)
+            elif node.operator == "-":
+                self._emit(code.Opcode.SUB)
+            elif node.operator == "*":
+                self._emit(code.Opcode.MUL)
+            elif node.operator == "/":
+                self._emit(code.Opcode.DIV)
             else:
                 raise RuntimeError(f"unknown operator {node.operator}")
         elif isinstance(node, ast.IntegerLiteral):
