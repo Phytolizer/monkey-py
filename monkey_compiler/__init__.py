@@ -39,6 +39,11 @@ class Compiler:
             self.compile(node.expression)
             self._emit(code.Opcode.POP)
         elif isinstance(node, ast.InfixExpression):
+            if node.operator == "<":
+                self.compile(node.right)
+                self.compile(node.left)
+                self._emit(code.Opcode.GREATER_THAN)
+                return
             self.compile(node.left)
             self.compile(node.right)
             if node.operator == "+":
@@ -49,6 +54,12 @@ class Compiler:
                 self._emit(code.Opcode.MUL)
             elif node.operator == "/":
                 self._emit(code.Opcode.DIV)
+            elif node.operator == ">":
+                self._emit(code.Opcode.GREATER_THAN)
+            elif node.operator == "==":
+                self._emit(code.Opcode.EQUAL)
+            elif node.operator == "!=":
+                self._emit(code.Opcode.NOT_EQUAL)
             else:
                 raise RuntimeError(f"unknown operator {node.operator}")
         elif isinstance(node, ast.IntegerLiteral):

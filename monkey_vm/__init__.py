@@ -9,6 +9,12 @@ TRUE = object.Boolean(True)
 FALSE = object.Boolean(False)
 
 
+def native_bool_to_boolean_object(b):
+    if b:
+        return TRUE
+    return FALSE
+
+
 @dataclass
 class VM:
     _constants: List[object.Object]
@@ -70,6 +76,33 @@ class VM:
             f"unsupported types for binary operation: {left.type()}, {right.type()}"
         )
 
+    def execute_integer_comparison(
+        self, op: code.Opcode, left: object.Object, right: object.Object
+    ):
+        if op == code.Opcode.EQUAL:
+            return self.push(native_bool_to_boolean_object(right.value == left.value))
+        elif op == code.Opcode.NOT_EQUAL:
+            return self.push(native_bool_to_boolean_object(right.value != left.value))
+        elif op == code.Opcode.GREATER_THAN:
+            return self.push(native_bool_to_boolean_object(left.value > right.value))
+        else:
+            raise RuntimeError(f"unknown operator: {op}")
+
+    def execute_comparison(self, op: code.Opcode):
+        right = self.pop()
+        left = self.pop()
+        if (
+            left.type() == object.ObjectType.INTEGER
+            and right.type() == object.ObjectType.INTEGER
+        ):
+            return self.execute_integer_comparison(op, left, right)
+        elif op == code.Opcode.EQUAL:
+            return self.push(native_bool_to_boolean_object(right == left))
+        elif op == code.Opcode.NOT_EQUAL:
+            return self.push(native_bool_to_boolean_object(right != left))
+        else:
+            raise RuntimeError(f"unknown operator: {op} ({left.type()} {right.type()})")
+
     def run(self):
         ip = 0
         while ip < len(self._instructions):
@@ -91,6 +124,12 @@ class VM:
                 code.Opcode.DIV,
             ):
                 self.execute_binary_operation(op)
+            elif op in (
+                code.Opcode.EQUAL,
+                code.Opcode.NOT_EQUAL,
+                code.Opcode.GREATER_THAN,
+            ):
+                self.execute_comparison(op)
             elif op == code.Opcode.POP:
                 self.pop()
             ip += 1

@@ -16,6 +16,10 @@ class Opcode(IntEnum):
     MUL = auto()
     DIV = auto()
 
+    EQUAL = auto()
+    NOT_EQUAL = auto()
+    GREATER_THAN = auto()
+
     POP = auto()
 
 
@@ -74,6 +78,9 @@ _definitions = {
     Opcode.SUB: Definition("OpSub", []),
     Opcode.MUL: Definition("OpMul", []),
     Opcode.DIV: Definition("OpDiv", []),
+    Opcode.EQUAL: Definition("OpEqual", []),
+    Opcode.NOT_EQUAL: Definition("OpNotEqual", []),
+    Opcode.GREATER_THAN: Definition("OpGreaterThan", []),
     Opcode.POP: Definition("OpPop", []),
 }
 

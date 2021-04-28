@@ -122,6 +122,66 @@ class TestCompiler:
                     code.make(code.Opcode.POP),
                 ],
             ),
+            (
+                "1 > 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.GREATER_THAN),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "1 < 2",
+                [2, 1],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.GREATER_THAN),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "1 == 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.EQUAL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "1 != 2",
+                [1, 2],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.CONSTANT, 1),
+                    code.make(code.Opcode.NOT_EQUAL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "true == false",
+                [],
+                [
+                    code.make(code.Opcode.TRUE),
+                    code.make(code.Opcode.FALSE),
+                    code.make(code.Opcode.EQUAL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "true != false",
+                [],
+                [
+                    code.make(code.Opcode.TRUE),
+                    code.make(code.Opcode.FALSE),
+                    code.make(code.Opcode.NOT_EQUAL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
         ],
     )
     def test_boolean_expression(self, input, expected_constants, expected_instructions):
