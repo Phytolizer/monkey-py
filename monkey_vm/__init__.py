@@ -61,7 +61,7 @@ class VM:
             result = left.value // right.value
         else:
             raise RuntimeError(f"unknown integer operator: {op}")
-        return self.push(object.Integer(result))
+        self.push(object.Integer(result))
 
     def execute_binary_operation(self, op: code.Opcode):
         right = self.pop()
@@ -70,7 +70,8 @@ class VM:
             left.type() == object.ObjectType.INTEGER
             and right.type() == object.ObjectType.INTEGER
         ):
-            return self.execute_binary_integer_operation(op, left, right)
+            self.execute_binary_integer_operation(op, left, right)
+            return
 
         raise RuntimeError(
             f"unsupported types for binary operation: {left.type()}, {right.type()}"
@@ -80,11 +81,11 @@ class VM:
         self, op: code.Opcode, left: object.Object, right: object.Object
     ):
         if op == code.Opcode.EQUAL:
-            return self.push(native_bool_to_boolean_object(right.value == left.value))
+            self.push(native_bool_to_boolean_object(right.value == left.value))
         elif op == code.Opcode.NOT_EQUAL:
-            return self.push(native_bool_to_boolean_object(right.value != left.value))
+            self.push(native_bool_to_boolean_object(right.value != left.value))
         elif op == code.Opcode.GREATER_THAN:
-            return self.push(native_bool_to_boolean_object(left.value > right.value))
+            self.push(native_bool_to_boolean_object(left.value > right.value))
         else:
             raise RuntimeError(f"unknown operator: {op}")
 
@@ -95,13 +96,29 @@ class VM:
             left.type() == object.ObjectType.INTEGER
             and right.type() == object.ObjectType.INTEGER
         ):
-            return self.execute_integer_comparison(op, left, right)
+            self.execute_integer_comparison(op, left, right)
         elif op == code.Opcode.EQUAL:
-            return self.push(native_bool_to_boolean_object(right == left))
+            self.push(native_bool_to_boolean_object(right == left))
         elif op == code.Opcode.NOT_EQUAL:
-            return self.push(native_bool_to_boolean_object(right != left))
+            self.push(native_bool_to_boolean_object(right != left))
         else:
             raise RuntimeError(f"unknown operator: {op} ({left.type()} {right.type()})")
+
+    def execute_bang_operator(self):
+        operand = self.pop()
+        if operand == TRUE:
+            self.push(FALSE)
+        elif operand == FALSE:
+            self.push(TRUE)
+        else:
+            self.push(FALSE)
+
+    def execute_minus_operator(self):
+        operand = self.pop()
+        if operand.type() == object.ObjectType.INTEGER:
+            self.push(object.Integer(-operand.value))
+        else:
+            raise RuntimeError(f"unsupported type for negation: {operand.type()}")
 
     def run(self):
         ip = 0
@@ -130,6 +147,10 @@ class VM:
                 code.Opcode.GREATER_THAN,
             ):
                 self.execute_comparison(op)
+            elif op == code.Opcode.BANG:
+                self.execute_bang_operator()
+            elif op == code.Opcode.MINUS:
+                self.execute_minus_operator()
             elif op == code.Opcode.POP:
                 self.pop()
             ip += 1

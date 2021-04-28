@@ -56,6 +56,10 @@ def check_expected_object(expected: Any, actual: object.Object):
         ("5 * 2 + 10", 20),
         ("5 + 2 * 10", 25),
         ("5 * (2 + 10)", 60),
+        ("-5", -5),
+        ("-10", -10),
+        ("-50 + 100 + -50", 0),
+        ("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50),
     ],
 )
 def test_integer_arithmetic(input: str, expected: int):
@@ -84,6 +88,12 @@ def test_integer_arithmetic(input: str, expected: int):
         ("(1 < 2) == false", False),
         ("(1 > 2) == true", False),
         ("(1 > 2) == false", True),
+        ("!true", False),
+        ("!false", True),
+        ("!5", False),
+        ("!!true", True),
+        ("!!false", False),
+        ("!!5", True),
     ],
 )
 def test_boolean_expression(input: str, expected: bool):

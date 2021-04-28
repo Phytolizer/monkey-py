@@ -98,6 +98,15 @@ class TestCompiler:
                     code.make(code.Opcode.POP),
                 ],
             ),
+            (
+                "-1",
+                [1],
+                [
+                    code.make(code.Opcode.CONSTANT, 0),
+                    code.make(code.Opcode.MINUS),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
         ],
     )
     def test_integer_arithmetic(self, input, expected_constants, expected_instructions):
@@ -179,6 +188,15 @@ class TestCompiler:
                     code.make(code.Opcode.TRUE),
                     code.make(code.Opcode.FALSE),
                     code.make(code.Opcode.NOT_EQUAL),
+                    code.make(code.Opcode.POP),
+                ],
+            ),
+            (
+                "!true",
+                [],
+                [
+                    code.make(code.Opcode.TRUE),
+                    code.make(code.Opcode.BANG),
                     code.make(code.Opcode.POP),
                 ],
             ),

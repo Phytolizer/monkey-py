@@ -62,6 +62,14 @@ class Compiler:
                 self._emit(code.Opcode.NOT_EQUAL)
             else:
                 raise RuntimeError(f"unknown operator {node.operator}")
+        elif isinstance(node, ast.PrefixExpression):
+            self.compile(node.right)
+            if node.operator == "!":
+                self._emit(code.Opcode.BANG)
+            elif node.operator == "-":
+                self._emit(code.Opcode.MINUS)
+            else:
+                raise RuntimeError(f"unknown operator {node.operator}")
         elif isinstance(node, ast.IntegerLiteral):
             integer = object.Integer(node.value)
             self._emit(code.Opcode.CONSTANT, self._add_constant(integer))
