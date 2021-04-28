@@ -96,6 +96,7 @@ def test_integer_arithmetic(input: str, expected: int):
         ("!!true", True),
         ("!!false", False),
         ("!!5", True),
+        ("!(if (false) { 5; })", True),
     ],
 )
 def test_boolean_expression(input: str, expected: bool):

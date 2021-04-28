@@ -114,9 +114,7 @@ class VM:
 
     def execute_bang_operator(self):
         operand = self.pop()
-        if operand == TRUE:
-            self.push(FALSE)
-        elif operand == FALSE:
+        if operand == FALSE or operand == NULL:
             self.push(TRUE)
         else:
             self.push(FALSE)
