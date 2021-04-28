@@ -10,6 +10,7 @@ class Opcode(IntEnum):
 
     TRUE = auto()
     FALSE = auto()
+    NULL = auto()
 
     ADD = auto()
     SUB = auto()
@@ -80,6 +81,7 @@ _definitions = {
     Opcode.CONSTANT: Definition("OpConstant", [2]),
     Opcode.TRUE: Definition("OpTrue", []),
     Opcode.FALSE: Definition("OpFalse", []),
+    Opcode.NULL: Definition("OpNull", []),
     Opcode.ADD: Definition("OpAdd", []),
     Opcode.SUB: Definition("OpSub", []),
     Opcode.MUL: Definition("OpMul", []),

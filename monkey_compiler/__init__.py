@@ -83,18 +83,17 @@ class Compiler:
             self.compile(node.consequence)
             if self._last_instruction_is_pop():
                 self._remove_last_pop()
+            jump_pos = self._emit(Opcode.JUMP, 9999)
+            after_consequence_pos = len(self._instructions)
+            self._change_operand(jump_not_truthy_pos, after_consequence_pos)
             if node.alternative is None:
-                after_consequence_pos = len(self._instructions)
-                self._change_operand(jump_not_truthy_pos, after_consequence_pos)
+                self._emit(Opcode.NULL)
             else:
-                jump_pos = self._emit(Opcode.JUMP, 9999)
-                after_consequence_pos = len(self._instructions)
-                self._change_operand(jump_not_truthy_pos, after_consequence_pos)
                 self.compile(node.alternative)
                 if self._last_instruction_is_pop():
                     self._remove_last_pop()
-                after_alternative_pos = len(self._instructions)
-                self._change_operand(jump_pos, after_alternative_pos)
+            after_alternative_pos = len(self._instructions)
+            self._change_operand(jump_pos, after_alternative_pos)
         elif isinstance(node, ast.InfixExpression):
             if node.operator == "<":
                 self.compile(node.right)

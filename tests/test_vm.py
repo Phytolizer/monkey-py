@@ -1,4 +1,4 @@
-from monkey_vm import VM
+from monkey_vm import NULL, VM
 from typing import Any
 import monkey_ast as ast
 import lexer
@@ -39,6 +39,8 @@ def check_expected_object(expected: Any, actual: object.Object):
         check_boolean_object(expected, actual)
     elif isinstance(expected, int):
         check_integer_object(expected, actual)
+    elif isinstance(expected, object.Null):
+        assert actual == NULL
 
 
 @pytest.mark.parametrize(
@@ -110,6 +112,8 @@ def test_boolean_expression(input: str, expected: bool):
         ("if (1 < 2) { 10 }", 10),
         ("if (1 < 2) { 10 } else { 20 }", 10),
         ("if (1 > 2) { 10 } else { 20 }", 20),
+        ("if (1 > 2) { 10 }", NULL),
+        ("if (false) { 10 }", NULL),
     ],
 )
 def test_conditionals(input: str, expected: int):

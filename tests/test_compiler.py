@@ -214,8 +214,10 @@ class TestCompiler:
                 [10, 3333],
                 [
                     code.make(Opcode.TRUE),
-                    code.make(Opcode.JUMP_NOT_TRUTHY, 7),
+                    code.make(Opcode.JUMP_NOT_TRUTHY, 10),
                     code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.JUMP, 11),
+                    code.make(Opcode.NULL),
                     code.make(Opcode.POP),
                     code.make(Opcode.CONSTANT, 1),
                     code.make(Opcode.POP),

@@ -7,6 +7,7 @@ import monkey_code as code
 STACK_SIZE = 2048
 TRUE = object.Boolean(True)
 FALSE = object.Boolean(False)
+NULL = object.Null()
 
 
 def native_bool_to_boolean_object(b):
@@ -169,6 +170,8 @@ class VM:
                 condition = self.pop()
                 if not is_truthy(condition):
                     ip = pos - 1
+            elif op == code.Opcode.NULL:
+                self.push(NULL)
             ip += 1
 
         return None
