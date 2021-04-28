@@ -96,5 +96,4 @@ def read_operands(d: Definition, ins: Instructions):
 
 
 def read_uint16(ins: bytes):
-    print(ins)
     return struct.unpack(">H", ins)[0]

@@ -1,6 +1,8 @@
+from monkey_vm import VM
+from monkey_compiler import Compiler
 from environment import Environment
 from lexer import Lexer
-from parser import Parser
+from monkey_parser import Parser
 import evaluator
 
 
@@ -10,7 +12,6 @@ def print_parser_errors(errs):
 
 
 if __name__ == "__main__":
-    env = Environment()
     while True:
         try:
             line = input(">> ")
@@ -24,6 +25,17 @@ if __name__ == "__main__":
         if len(p.errors) > 0:
             print_parser_errors(p.errors)
             continue
-        evaluated = evaluator.eval_node(program, env)
-        if evaluated is not None:
-            print(evaluated.inspect())
+        comp = Compiler()
+        try:
+            comp.compile(program)
+        except RuntimeError as e:
+            print(f"compilation failed: {e}")
+            continue
+        machine = VM(comp.bytecode())
+        try:
+            machine.run()
+        except RuntimeError as e:
+            print(f"executing bytecode failed: {e}")
+            continue
+        stack_top = machine.stack_top()
+        print(stack_top.inspect())
