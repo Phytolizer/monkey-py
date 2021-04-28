@@ -3,6 +3,7 @@ from monkey_compiler import Compiler
 from lexer import Lexer
 from monkey_parser import Parser
 import monkey_code as code
+from monkey_code import Opcode
 import monkey_object as object
 import pytest
 
@@ -52,59 +53,59 @@ class TestCompiler:
                 "1 + 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.ADD),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.ADD),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1; 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.POP),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.POP),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 - 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.SUB),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.SUB),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 * 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.MUL),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.MUL),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "2 / 1",
                 [2, 1],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.DIV),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.DIV),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "-1",
                 [1],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.MINUS),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.MINUS),
+                    code.make(Opcode.POP),
                 ],
             ),
         ],
@@ -119,88 +120,122 @@ class TestCompiler:
                 "true",
                 [],
                 [
-                    code.make(code.Opcode.TRUE),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "false",
                 [],
                 [
-                    code.make(code.Opcode.FALSE),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.FALSE),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 > 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.GREATER_THAN),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.GREATER_THAN),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 < 2",
                 [2, 1],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.GREATER_THAN),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.GREATER_THAN),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 == 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.EQUAL),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.EQUAL),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "1 != 2",
                 [1, 2],
                 [
-                    code.make(code.Opcode.CONSTANT, 0),
-                    code.make(code.Opcode.CONSTANT, 1),
-                    code.make(code.Opcode.NOT_EQUAL),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.NOT_EQUAL),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "true == false",
                 [],
                 [
-                    code.make(code.Opcode.TRUE),
-                    code.make(code.Opcode.FALSE),
-                    code.make(code.Opcode.EQUAL),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.FALSE),
+                    code.make(Opcode.EQUAL),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "true != false",
                 [],
                 [
-                    code.make(code.Opcode.TRUE),
-                    code.make(code.Opcode.FALSE),
-                    code.make(code.Opcode.NOT_EQUAL),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.FALSE),
+                    code.make(Opcode.NOT_EQUAL),
+                    code.make(Opcode.POP),
                 ],
             ),
             (
                 "!true",
                 [],
                 [
-                    code.make(code.Opcode.TRUE),
-                    code.make(code.Opcode.BANG),
-                    code.make(code.Opcode.POP),
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.BANG),
+                    code.make(Opcode.POP),
                 ],
             ),
         ],
     )
     def test_boolean_expression(self, input, expected_constants, expected_instructions):
+        self.run_compiler_test(input, expected_constants, expected_instructions)
+
+    @pytest.mark.parametrize(
+        "input,expected_constants,expected_instructions",
+        [
+            (
+                "if (true) { 10 }; 3333;",
+                [10, 3333],
+                [
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.JUMP_NOT_TRUTHY, 7),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.POP),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.POP),
+                ],
+            ),
+            (
+                "if (true) { 10 } else { 20 }; 3333;",
+                [10, 20, 3333],
+                [
+                    code.make(Opcode.TRUE),
+                    code.make(Opcode.JUMP_NOT_TRUTHY, 10),
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.JUMP, 13),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.POP),
+                    code.make(Opcode.CONSTANT, 2),
+                    code.make(Opcode.POP),
+                ],
+            ),
+        ],
+    )
+    def test_conditionals(self, input, expected_constants, expected_instructions):
         self.run_compiler_test(input, expected_constants, expected_instructions)

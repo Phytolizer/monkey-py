@@ -25,6 +25,9 @@ class Opcode(IntEnum):
 
     POP = auto()
 
+    JUMP_NOT_TRUTHY = auto()
+    JUMP = auto()
+
 
 @dataclass
 class Definition:
@@ -33,7 +36,7 @@ class Definition:
 
 
 class Instructions:
-    def __init__(self, b: bytes):
+    def __init__(self, b: bytearray):
         self.b = b
 
     def __str__(self):
@@ -87,6 +90,8 @@ _definitions = {
     Opcode.NOT_EQUAL: Definition("OpNotEqual", []),
     Opcode.GREATER_THAN: Definition("OpGreaterThan", []),
     Opcode.POP: Definition("OpPop", []),
+    Opcode.JUMP_NOT_TRUTHY: Definition("OpJumpNotTruthy", [2]),
+    Opcode.JUMP: Definition("OpJump", [2]),
 }
 
 
@@ -99,7 +104,7 @@ def make(op: Opcode, *operands):
     try:
         d = _definitions[op]
     except KeyError:
-        return bytes([])
+        return bytearray([])
 
     instruction_len = 1 + sum(d.operand_widths)
     instruction = list(0x00 for _ in range(instruction_len))
@@ -109,7 +114,7 @@ def make(op: Opcode, *operands):
         if w == 2:
             instruction[offset : offset + 2] = pack(">H", o)
         offset += w
-    return bytes(instruction)
+    return bytearray(instruction)
 
 
 def read_operands(d: Definition, ins: Instructions):
@@ -117,10 +122,10 @@ def read_operands(d: Definition, ins: Instructions):
     offset = 0
     for i, width in enumerate(d.operand_widths):
         if width == 2:
-            operands[i] = read_uint16(bytes(ins[offset : offset + 2]))
+            operands[i] = read_uint16(bytearray(ins[offset : offset + 2]))
         offset += width
     return operands, offset
 
 
-def read_uint16(ins: bytes):
+def read_uint16(ins: bytearray):
     return struct.unpack(">H", ins)[0]

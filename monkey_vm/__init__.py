@@ -15,6 +15,13 @@ def native_bool_to_boolean_object(b):
     return FALSE
 
 
+def is_truthy(obj: object.Object):
+    if isinstance(obj, object.Boolean):
+        return obj.value
+    else:
+        return True
+
+
 @dataclass
 class VM:
     _constants: List[object.Object]
@@ -153,6 +160,15 @@ class VM:
                 self.execute_minus_operator()
             elif op == code.Opcode.POP:
                 self.pop()
+            elif op == code.Opcode.JUMP:
+                pos = code.read_uint16(self._instructions[ip + 1 : ip + 3])
+                ip = pos - 1
+            elif op == code.Opcode.JUMP_NOT_TRUTHY:
+                pos = code.read_uint16(self._instructions[ip + 1 : ip + 3])
+                ip += 2
+                condition = self.pop()
+                if not is_truthy(condition):
+                    ip = pos - 1
             ip += 1
 
         return None
