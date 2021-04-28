@@ -31,6 +31,11 @@ class VM:
         self._stack[self._sp] = o
         self._sp += 1
 
+    def pop(self):
+        o = self._stack[self._sp - 1]
+        self._sp -= 1
+        return o
+
     def run(self):
         ip = 0
         while ip < len(self._instructions):
@@ -41,6 +46,11 @@ class VM:
                 )
                 ip += 2
                 self.push(self._constants[const_index])
+            elif op == code.Opcode.ADD:
+                right = self.pop()
+                left = self.pop()
+                result = left.value + right.value
+                self.push(object.Integer(result))
             ip += 1
 
         return None

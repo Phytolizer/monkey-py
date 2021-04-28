@@ -39,7 +39,7 @@ def check_expected_object(expected: Any, actual: object.Object):
     [
         ("1", 1),
         ("2", 2),
-        ("1 + 2", 2),  # FIXME
+        ("1 + 2", 3),
     ],
 )
 def test_integer_arithmetic(input, expected):
