@@ -1,5 +1,5 @@
 from lexer import Lexer
-from parser import Parser
+from monkey_parser import Parser
 import monkey_ast as ast
 import pytest
 

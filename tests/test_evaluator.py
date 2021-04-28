@@ -1,6 +1,6 @@
 from environment import Environment
 import lexer
-import parser
+import monkey_parser as parser
 from evaluator import NULL, eval_node, TRUE, FALSE
 import pytest
 import monkey_object
@@ -167,7 +167,7 @@ class TestEvaluator:
             (
                 '{"name": "Monkey"}[fn(x) { x }];',
                 "unusable as hash key: FUNCTION",
-            )
+            ),
         ],
     )
     def test_error_handling(self, text, expected):
