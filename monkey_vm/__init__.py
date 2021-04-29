@@ -19,6 +19,8 @@ def native_bool_to_boolean_object(b):
 def is_truthy(obj: object.Object):
     if isinstance(obj, object.Boolean):
         return obj.value
+    elif obj == NULL:
+        return False
     else:
         return True
 

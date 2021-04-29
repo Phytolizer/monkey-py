@@ -115,6 +115,7 @@ def test_boolean_expression(input: str, expected: bool):
         ("if (1 > 2) { 10 } else { 20 }", 20),
         ("if (1 > 2) { 10 }", NULL),
         ("if (false) { 10 }", NULL),
+        ("if ((if (false) { 10 })) { 10 } else { 20 }", 20),
     ],
 )
 def test_conditionals(input: str, expected: int):
