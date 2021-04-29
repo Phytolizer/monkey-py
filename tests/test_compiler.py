@@ -1,53 +1,60 @@
 from typing import Any, List
-from monkey_compiler import Compiler
+from monkey_compiler import Compiler, Symbol, SymbolScope, SymbolTable
 from lexer import Lexer
 from monkey_parser import Parser
 import monkey_code as code
 from monkey_code import Opcode
-import monkey_object as object
+import monkey_object
 import pytest
 
 
+def concat_instructions(instructions: List[code.Instructions]):
+    out = []
+    for ins in instructions:
+        out.extend(ins)
+    return code.Instructions(bytearray(out))
+
+
+def parse(text: str):
+    lex = Lexer(text)
+    par = Parser(lex)
+    return par.parse_program()
+
+
+def check_integer_object(expected: int, actual: monkey_object.Object):
+    assert isinstance(actual, monkey_object.Integer)
+    assert actual.value == expected
+
+
+def check_constants(expected: List[Any], actual: List[monkey_object.Object]):
+    assert len(expected) == len(actual)
+    for act, constant in zip(actual, expected):
+        if isinstance(constant, int):
+            check_integer_object(constant, act)
+
+
+def check_instructions(
+        expected: List[code.Instructions], actual: bytearray
+):
+    concatted = concat_instructions(expected)
+    assert str(code.Instructions(actual)) == str(concatted)
+    for a, ins in zip(actual, concatted):
+        assert a == ins
+
+
+def run_compiler_test(text, expected_constants, expected_instructions):
+    program = parse(text)
+    compiler = Compiler()
+    compiler.compile(program)
+    bytecode = compiler.bytecode()
+    check_instructions(expected_instructions, bytecode.instructions)
+    check_constants(expected_constants, bytecode.constants)
+
+
 class TestCompiler:
-    def parse(self, input: str):
-        lex = Lexer(input)
-        par = Parser(lex)
-        return par.parse_program()
-
-    def check_integer_object(self, expected: int, actual: object.Object):
-        assert isinstance(actual, object.Integer)
-        assert actual.value == expected
-
-    def check_constants(self, expected: List[Any], actual: List[object.Object]):
-        assert len(expected) == len(actual)
-        for act, constant in zip(actual, expected):
-            if isinstance(constant, int):
-                self.check_integer_object(constant, act)
-
-    def check_instructions(
-        self, expected: List[code.Instructions], actual: code.Instructions
-    ):
-        concatted = self.concat_instructions(expected)
-        assert str(code.Instructions(actual)) == str(concatted)
-        for a, ins in zip(actual, concatted):
-            assert a == ins
-
-    def concat_instructions(self, instructions: code.Instructions):
-        out = []
-        for ins in instructions:
-            out.extend(ins)
-        return code.Instructions(out)
-
-    def run_compiler_test(self, input, expected_constants, expected_instructions):
-        program = self.parse(input)
-        compiler = Compiler()
-        compiler.compile(program)
-        bytecode = compiler.bytecode()
-        self.check_instructions(expected_instructions, bytecode.instructions)
-        self.check_constants(expected_constants, bytecode.constants)
 
     @pytest.mark.parametrize(
-        "input,expected_constants,expected_instructions",
+        "text,expected_constants,expected_instructions",
         [
             (
                 "1 + 2",
@@ -110,11 +117,11 @@ class TestCompiler:
             ),
         ],
     )
-    def test_integer_arithmetic(self, input, expected_constants, expected_instructions):
-        self.run_compiler_test(input, expected_constants, expected_instructions)
+    def test_integer_arithmetic(self, text, expected_constants, expected_instructions):
+        run_compiler_test(text, expected_constants, expected_instructions)
 
     @pytest.mark.parametrize(
-        "input,expected_constants,expected_instructions",
+        "text,expected_constants,expected_instructions",
         [
             (
                 "true",
@@ -203,11 +210,11 @@ class TestCompiler:
             ),
         ],
     )
-    def test_boolean_expression(self, input, expected_constants, expected_instructions):
-        self.run_compiler_test(input, expected_constants, expected_instructions)
+    def test_boolean_expression(self, text, expected_constants, expected_instructions):
+        run_compiler_test(text, expected_constants, expected_instructions)
 
     @pytest.mark.parametrize(
-        "input,expected_constants,expected_instructions",
+        "text,expected_constants,expected_instructions",
         [
             (
                 "if (true) { 10 }; 3333;",
@@ -239,5 +246,82 @@ class TestCompiler:
             ),
         ],
     )
-    def test_conditionals(self, input, expected_constants, expected_instructions):
-        self.run_compiler_test(input, expected_constants, expected_instructions)
+    def test_conditionals(self, text, expected_constants, expected_instructions):
+        run_compiler_test(text, expected_constants, expected_instructions)
+
+    @pytest.mark.parametrize(
+        "text,expected_constants,expected_instructions",
+        [
+            (
+                """
+                let one = 1;
+                let two = 2;
+                """,
+                [1, 2],
+                [
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.SET_GLOBAL, 0),
+                    code.make(Opcode.CONSTANT, 1),
+                    code.make(Opcode.SET_GLOBAL, 1),
+                ],
+            ),
+            (
+                """
+                let one = 1;
+                one;
+                """,
+                [1],
+                [
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.SET_GLOBAL, 0),
+                    code.make(Opcode.GET_GLOBAL, 0),
+                    code.make(Opcode.POP),
+                ],
+            ),
+            (
+                """
+                let one = 1;
+                let two = one;
+                two;
+                """,
+                [1],
+                [
+                    code.make(Opcode.CONSTANT, 0),
+                    code.make(Opcode.SET_GLOBAL, 0),
+                    code.make(Opcode.GET_GLOBAL, 0),
+                    code.make(Opcode.SET_GLOBAL, 1),
+                    code.make(Opcode.GET_GLOBAL, 1),
+                    code.make(Opcode.POP),
+                ],
+            ),
+        ],
+    )
+    def test_global_let_statements(
+        self, text, expected_constants, expected_instructions
+    ):
+        run_compiler_test(text, expected_constants, expected_instructions)
+
+    def test_define(self):
+        expected = {
+            "a": Symbol("a", SymbolScope.GLOBAL, 0),
+            "b": Symbol("b", SymbolScope.GLOBAL, 1),
+        }
+
+        glob = SymbolTable()
+        a = glob.define("a")
+        assert a == expected["a"]
+
+        b = glob.define("b")
+        assert b == expected["b"]
+
+    def test_resolve_global(self):
+        glob = SymbolTable()
+        glob.define("a")
+        glob.define("b")
+        expected = [
+            Symbol("a", SymbolScope.GLOBAL, 0),
+            Symbol("b", SymbolScope.GLOBAL, 1),
+        ]
+        for sym in expected:
+            result = glob.resolve(sym.name)
+            assert result == sym

@@ -1,9 +1,40 @@
-from typing import List
+from dataclasses import dataclass
+from enum import Enum, auto
+from monkey_code import Opcode
+from typing import List, Dict
 import monkey_ast as ast
 import monkey_code as code
-import monkey_object as object
-from monkey_code import Opcode
-from dataclasses import dataclass
+import monkey_object
+
+
+class SymbolScope(Enum):
+    GLOBAL = auto()
+
+
+@dataclass
+class Symbol:
+    name: str
+    scope: SymbolScope
+    index: int
+
+
+@dataclass(init=False)
+class SymbolTable:
+    _store: Dict[str, Symbol]
+    _num_definitions: int
+
+    def __init__(self):
+        self._store = dict()
+        self._num_definitions = 0
+
+    def define(self, name: str):
+        symbol = Symbol(name, SymbolScope.GLOBAL, self._num_definitions)
+        self._store[name] = symbol
+        self._num_definitions += 1
+        return symbol
+
+    def resolve(self, name: str):
+        return self._store[name]
 
 
 @dataclass
@@ -15,17 +46,19 @@ class EmittedInstruction:
 @dataclass(init=False)
 class Compiler:
     _instructions: bytearray
-    _constants: List[object.Object]
+    _constants: List[monkey_object.Object]
     _last_instruction: EmittedInstruction
     _previous_instruction: EmittedInstruction
+    _symbol_table: SymbolTable
 
     def __init__(self):
         self._instructions = bytearray([])
         self._constants = []
-        self._last_instruction = EmittedInstruction(0, 0)
-        self._previous_instruction = EmittedInstruction(0, 0)
+        self._last_instruction = EmittedInstruction(Opcode.CONSTANT, 0)
+        self._previous_instruction = EmittedInstruction(Opcode.CONSTANT, 0)
+        self._symbol_table = SymbolTable()
 
-    def _add_constant(self, obj: object.Object):
+    def _add_constant(self, obj: monkey_object.Object):
         self._constants.append(obj)
         return len(self._constants) - 1
 
@@ -59,7 +92,7 @@ class Compiler:
         self._last_instruction = self._previous_instruction
 
     def _replace_instruction(self, pos: int, new_instruction: bytearray):
-        self._instructions[pos : pos + len(new_instruction)] = new_instruction
+        self._instructions[pos: pos + len(new_instruction)] = new_instruction
 
     def _change_operand(self, op_pos: int, operand: int):
         op = Opcode(self._instructions[op_pos])
@@ -76,6 +109,10 @@ class Compiler:
         elif isinstance(node, ast.ExpressionStatement):
             self.compile(node.expression)
             self._emit(Opcode.POP)
+        elif isinstance(node, ast.LetStatement):
+            self.compile(node.value)
+            symbol = self._symbol_table.define(node.name.value)
+            self._emit(Opcode.SET_GLOBAL, symbol.index)
         elif isinstance(node, ast.IfExpression):
             self.compile(node.condition)
             # this jump offset is bogus.
@@ -127,13 +164,20 @@ class Compiler:
             else:
                 raise RuntimeError(f"unknown operator {node.operator}")
         elif isinstance(node, ast.IntegerLiteral):
-            integer = object.Integer(node.value)
+            integer = monkey_object.Integer(node.value)
             self._emit(Opcode.CONSTANT, self._add_constant(integer))
         elif isinstance(node, ast.Boolean):
             if node.value:
                 self._emit(Opcode.TRUE)
             else:
                 self._emit(Opcode.FALSE)
+        elif isinstance(node, ast.Identifier):
+            try:
+                symbol = self._symbol_table.resolve(node.value)
+            except KeyError:
+                raise RuntimeError(f"undefined variable {node.value}")
+
+            self._emit(Opcode.GET_GLOBAL, symbol.index)
 
     def bytecode(self):
         return Bytecode(bytes(self._instructions), self._constants)
@@ -142,4 +186,4 @@ class Compiler:
 @dataclass(init=True, frozen=True)
 class Bytecode:
     instructions: bytes
-    constants: List[object.Object]
+    constants: List[monkey_object.Object]
