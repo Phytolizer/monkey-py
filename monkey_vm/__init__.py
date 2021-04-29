@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from monkey_compiler import Bytecode
 from typing import List
-import monkey_object as object
+import monkey_object
 import monkey_code as code
 
 STACK_SIZE = 2048
-TRUE = object.Boolean(True)
-FALSE = object.Boolean(False)
-NULL = object.Null()
+GLOBALS_SIZE = 65536
+TRUE = monkey_object.Boolean(True)
+FALSE = monkey_object.Boolean(False)
+NULL = monkey_object.Null()
 
 
 def native_bool_to_boolean_object(b):
@@ -16,8 +17,8 @@ def native_bool_to_boolean_object(b):
     return FALSE
 
 
-def is_truthy(obj: object.Object):
-    if isinstance(obj, object.Boolean):
+def is_truthy(obj: monkey_object.Object):
+    if isinstance(obj, monkey_object.Boolean):
         return obj.value
     elif obj == NULL:
         return False
@@ -27,23 +28,25 @@ def is_truthy(obj: object.Object):
 
 @dataclass
 class VM:
-    _constants: List[object.Object]
+    _constants: List[monkey_object.Object]
     _instructions: code.Instructions
-    _stack: List[object.Object]
+    _stack: List[monkey_object.Object]
     _sp: int
+    _globals: List[monkey_object.Object]
 
     def __init__(self, bytecode: Bytecode):
         self._instructions = bytecode.instructions
         self._constants = bytecode.constants
         self._stack = [None for _ in range(STACK_SIZE)]
         self._sp = 0
+        self._globals = [None for _ in range(GLOBALS_SIZE)]
 
     def stack_top(self):
         if self._sp == 0:
             return None
         return self._stack[self._sp - 1]
 
-    def push(self, o: object.Object):
+    def push(self, o: monkey_object.Object):
         if self._sp >= STACK_SIZE:
             raise RuntimeError("stack overflow")
         self._stack[self._sp] = o
@@ -58,7 +61,7 @@ class VM:
         return self._stack[self._sp]
 
     def execute_binary_integer_operation(
-        self, op: code.Opcode, left: object.Object, right: object.Object
+        self, op: code.Opcode, left: monkey_object.Object, right: monkey_object.Object
     ):
         result = None
         if op == code.Opcode.ADD:
@@ -71,14 +74,14 @@ class VM:
             result = left.value // right.value
         else:
             raise RuntimeError(f"unknown integer operator: {op}")
-        self.push(object.Integer(result))
+        self.push(monkey_object.Integer(result))
 
     def execute_binary_operation(self, op: code.Opcode):
         right = self.pop()
         left = self.pop()
         if (
-            left.type() == object.ObjectType.INTEGER
-            and right.type() == object.ObjectType.INTEGER
+            left.type() == monkey_object.ObjectType.INTEGER
+            and right.type() == monkey_object.ObjectType.INTEGER
         ):
             self.execute_binary_integer_operation(op, left, right)
             return
@@ -88,7 +91,7 @@ class VM:
         )
 
     def execute_integer_comparison(
-        self, op: code.Opcode, left: object.Object, right: object.Object
+        self, op: code.Opcode, left: monkey_object.Object, right: monkey_object.Object
     ):
         if op == code.Opcode.EQUAL:
             self.push(native_bool_to_boolean_object(right.value == left.value))
@@ -103,8 +106,8 @@ class VM:
         right = self.pop()
         left = self.pop()
         if (
-            left.type() == object.ObjectType.INTEGER
-            and right.type() == object.ObjectType.INTEGER
+            left.type() == monkey_object.ObjectType.INTEGER
+            and right.type() == monkey_object.ObjectType.INTEGER
         ):
             self.execute_integer_comparison(op, left, right)
         elif op == code.Opcode.EQUAL:
@@ -123,8 +126,8 @@ class VM:
 
     def execute_minus_operator(self):
         operand = self.pop()
-        if operand.type() == object.ObjectType.INTEGER:
-            self.push(object.Integer(-operand.value))
+        if operand.type() == monkey_object.ObjectType.INTEGER:
+            self.push(monkey_object.Integer(-operand.value))
         else:
             raise RuntimeError(f"unsupported type for negation: {operand.type()}")
 
@@ -170,6 +173,15 @@ class VM:
                 condition = self.pop()
                 if not is_truthy(condition):
                     ip = pos - 1
+            elif op == code.Opcode.SET_GLOBAL:
+                global_index = code.read_uint16(self._instructions[ip + 1 : ip + 3])
+                ip += 2
+
+                self._globals[global_index] = self.pop()
+            elif op == code.Opcode.GET_GLOBAL:
+                global_index = code.read_uint16(self._instructions[ip + 1 : ip + 3])
+                ip += 2
+                self.push(self._globals[global_index])
             elif op == code.Opcode.NULL:
                 self.push(NULL)
             ip += 1

@@ -1,30 +1,30 @@
 from monkey_vm import NULL, VM
 from typing import Any
 import lexer
-import monkey_object as object
+import monkey_object
 import monkey_parser as parser
 import monkey_compiler as compiler
 import pytest
 
 
-def parse(input: str):
-    lex = lexer.Lexer(input)
+def parse(text: str):
+    lex = lexer.Lexer(text)
     par = parser.Parser(lex)
     return par.parse_program()
 
 
-def check_integer_object(expected: int, actual: object.Object):
-    assert isinstance(actual, object.Integer)
+def check_integer_object(expected: int, actual: monkey_object.Object):
+    assert isinstance(actual, monkey_object.Integer)
     assert actual.value == expected
 
 
-def check_boolean_object(expected: bool, actual: object.Object):
-    assert isinstance(actual, object.Boolean)
+def check_boolean_object(expected: bool, actual: monkey_object.Object):
+    assert isinstance(actual, monkey_object.Boolean)
     assert actual.value == expected
 
 
-def run_vm_test(input: str, expected: Any):
-    program = parse(input)
+def run_vm_test(text: str, expected: Any):
+    program = parse(text)
     comp = compiler.Compiler()
     comp.compile(program)
     vm = VM(comp.bytecode())
@@ -33,17 +33,17 @@ def run_vm_test(input: str, expected: Any):
     check_expected_object(expected, stack_elem)
 
 
-def check_expected_object(expected: Any, actual: object.Object):
+def check_expected_object(expected: Any, actual: monkey_object.Object):
     if isinstance(expected, bool):
         check_boolean_object(expected, actual)
     elif isinstance(expected, int):
         check_integer_object(expected, actual)
-    elif isinstance(expected, object.Null):
+    elif isinstance(expected, monkey_object.Null):
         assert actual == NULL
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "text,expected",
     [
         ("1", 1),
         ("2", 2),
@@ -63,12 +63,12 @@ def check_expected_object(expected: Any, actual: object.Object):
         ("(5 + 10 * 2 + 15 / 3) * 2 + -10", 50),
     ],
 )
-def test_integer_arithmetic(input: str, expected: int):
-    run_vm_test(input, expected)
+def test_integer_arithmetic(text: str, expected: int):
+    run_vm_test(text, expected)
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "text,expected",
     [
         ("true", True),
         ("false", False),
@@ -98,12 +98,12 @@ def test_integer_arithmetic(input: str, expected: int):
         ("!(if (false) { 5; })", True),
     ],
 )
-def test_boolean_expression(input: str, expected: bool):
-    run_vm_test(input, expected)
+def test_boolean_expression(text: str, expected: bool):
+    run_vm_test(text, expected)
 
 
 @pytest.mark.parametrize(
-    "input,expected",
+    "text,expected",
     [
         ("if (true) { 10 }", 10),
         ("if (true) { 10 } else { 20 }", 10),
@@ -117,5 +117,17 @@ def test_boolean_expression(input: str, expected: bool):
         ("if ((if (false) { 10 })) { 10 } else { 20 }", 20),
     ],
 )
-def test_conditionals(input: str, expected: int):
-    run_vm_test(input, expected)
+def test_conditionals(text: str, expected: int):
+    run_vm_test(text, expected)
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("let one = 1; one", 1),
+        ("let one = 1; let two = 2; one + two", 3),
+        ("let one = 1; let two = one + one; one + two", 3),
+    ]
+)
+def test_global_let_statements(text: str, expected: int):
+    run_vm_test(text, expected)
