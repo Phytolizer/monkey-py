@@ -18,9 +18,9 @@ class TestEvaluator:
         assert obj is NULL
 
     def eval_setup(self, text):
-        l = lexer.Lexer(text)
-        p = parser.Parser(l)
-        program = p.parse_program()
+        lex = lexer.Lexer(text)
+        par = parser.Parser(lex)
+        program = par.parse_program()
         return eval_node(program, Environment())
 
     @pytest.mark.parametrize(

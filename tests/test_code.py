@@ -1,5 +1,5 @@
 from typing import List
-from monkey_code import Definition, Instructions, Opcode, lookup, make, read_operands
+from monkey_code import Instructions, Opcode, lookup, make, read_operands
 import pytest
 
 

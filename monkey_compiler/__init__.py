@@ -45,9 +45,9 @@ class Compiler:
 
     def _add_instruction(self, ins: List[int]):
         pos_new_instruction = len(self._instructions)
-        l = list(self._instructions)
-        l.extend(ins)
-        self._instructions = bytearray(l)
+        ins_lst = list(self._instructions)
+        ins_lst.extend(ins)
+        self._instructions = bytearray(ins_lst)
 
         return pos_new_instruction
 

@@ -1,4 +1,4 @@
-from monkey_object import *
+from monkey_object import String
 
 
 class TestObject:

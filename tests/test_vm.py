@@ -1,6 +1,5 @@
 from monkey_vm import NULL, VM
 from typing import Any
-import monkey_ast as ast
 import lexer
 import monkey_object as object
 import monkey_parser as parser
@@ -9,9 +8,9 @@ import pytest
 
 
 def parse(input: str):
-    l = lexer.Lexer(input)
-    p = parser.Parser(l)
-    return p.parse_program()
+    lex = lexer.Lexer(input)
+    par = parser.Parser(lex)
+    return par.parse_program()
 
 
 def check_integer_object(expected: int, actual: object.Object):

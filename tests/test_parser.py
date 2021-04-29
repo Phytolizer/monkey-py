@@ -5,6 +5,13 @@ import pytest
 
 
 class TestParser:
+    def parse(self, text):
+        lex = Lexer(text)
+        par = Parser(lex)
+        program = par.parse_program()
+        self.check_parser_errors(par)
+        return program
+
     def check_let_statement(self, stmt, name):
         assert stmt.token_literal() == "let"
         assert isinstance(stmt, ast.LetStatement)
@@ -54,8 +61,8 @@ class TestParser:
         ],
     )
     def test_let_statements(self, text, expected_ident, expected_value):
-        l = Lexer(text)
-        p = Parser(l)
+        lex = Lexer(text)
+        p = Parser(lex)
 
         program = p.parse_program()
         self.check_parser_errors(p)
@@ -74,11 +81,7 @@ class TestParser:
         ],
     )
     def test_return_statements(self, text, expected):
-        l = Lexer(text)
-        p = Parser(l)
-
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         assert isinstance(program.statements[0], ast.ReturnStatement)
@@ -88,11 +91,7 @@ class TestParser:
     def test_identifier_expression(self):
         text = "foobar;"
 
-        l = Lexer(text)
-        p = Parser(l)
-
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -102,10 +101,7 @@ class TestParser:
     def test_integer_literal_expression(self):
         text = "5;"
 
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -114,10 +110,7 @@ class TestParser:
 
     def test_boolean_expression(self):
         text = "true;"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -134,10 +127,7 @@ class TestParser:
         ],
     )
     def test_prefix_expressions(self, text, expected_operator, expected_literal):
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -164,10 +154,7 @@ class TestParser:
         ],
     )
     def test_infix_expressions(self, text, left, operator, right):
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -208,18 +195,12 @@ class TestParser:
         ],
     )
     def test_operator_precedence(self, text, expected):
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         assert program.string() == expected
 
     def test_if_expression(self):
         text = "if (x < y) { x }"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -235,10 +216,7 @@ class TestParser:
 
     def test_if_else_expression(self):
         text = "if (x < y) { x } else { y }"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -258,10 +236,7 @@ class TestParser:
 
     def test_function_literal(self):
         text = "fn(x, y) { x + y; }"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
 
         assert len(program.statements) == 1
         stmt = program.statements[0]
@@ -285,10 +260,7 @@ class TestParser:
         ],
     )
     def test_function_parameters(self, text, params):
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         assert len(program.statements) == 1
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
@@ -300,10 +272,7 @@ class TestParser:
 
     def test_call_expression(self):
         text = "add(1, 2 * 3, 4 + 5)"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         assert len(program.statements) == 1
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
@@ -317,10 +286,7 @@ class TestParser:
 
     def test_string_literal(self):
         text = '"foobar"'
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         assert len(program.statements) == 1
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
@@ -330,10 +296,7 @@ class TestParser:
 
     def test_array_literal(self):
         text = "[1, 2 * 2, 3 + 3]"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         assert isinstance(program.statements[0], ast.ExpressionStatement)
         assert isinstance(program.statements[0].expression, ast.ArrayLiteral)
         array = program.statements[0].expression
@@ -344,10 +307,7 @@ class TestParser:
 
     def test_index_expression(self):
         text = "myArray[1 + 1]"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         index_exp = stmt.expression
@@ -357,10 +317,7 @@ class TestParser:
 
     def test_hash_literals_string_keys(self):
         text = '{"one": 1, "two": 2, "three": 3}'
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         hash = stmt.expression
@@ -378,10 +335,7 @@ class TestParser:
 
     def test_hash_literals_integer_keys(self):
         text = "{2: 1, 1: 2, 3: 3}"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         hash = stmt.expression
@@ -399,10 +353,7 @@ class TestParser:
 
     def test_hash_literals_boolean_keys(self):
         text = "{true: 1, false: 2}"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         hash = stmt.expression
@@ -419,10 +370,7 @@ class TestParser:
 
     def test_empty_hash_literal(self):
         text = "{}"
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         hash = stmt.expression
@@ -431,10 +379,7 @@ class TestParser:
 
     def test_hash_literals_with_expressions(self):
         text = '{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}'
-        l = Lexer(text)
-        p = Parser(l)
-        program = p.parse_program()
-        self.check_parser_errors(p)
+        program = self.parse(text)
         stmt = program.statements[0]
         assert isinstance(stmt, ast.ExpressionStatement)
         hash = stmt.expression

@@ -71,8 +71,8 @@ def monkey_rest(args):
     arr = args[0]
     length = len(arr.elements)
     if length > 0:
-        newElements = arr.elements[1:length]
-        return monkey_object.Array(newElements)
+        new_elements = arr.elements[1:length]
+        return monkey_object.Array(new_elements)
 
     return NULL
 
@@ -87,8 +87,8 @@ def monkey_push(args):
             f"argument to `push` must be ARRAY, got {args[0].type()}"
         )
     arr = args[0]
-    newElements = [*arr.elements, args[1]]
-    return monkey_object.Array(newElements)
+    new_elements = [*arr.elements, args[1]]
+    return monkey_object.Array(new_elements)
 
 
 def monkey_puts(args):

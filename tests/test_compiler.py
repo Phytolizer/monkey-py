@@ -10,9 +10,9 @@ import pytest
 
 class TestCompiler:
     def parse(self, input: str):
-        l = Lexer(input)
-        p = Parser(l)
-        return p.parse_program()
+        lex = Lexer(input)
+        par = Parser(lex)
+        return par.parse_program()
 
     def check_integer_object(self, expected: int, actual: object.Object):
         assert isinstance(actual, object.Integer)

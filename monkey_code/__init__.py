@@ -1,5 +1,5 @@
 import struct
-from typing import List, NewType
+from typing import List
 from enum import IntEnum, auto
 from dataclasses import dataclass
 from struct import pack
@@ -28,6 +28,9 @@ class Opcode(IntEnum):
 
     JUMP_NOT_TRUTHY = auto()
     JUMP = auto()
+
+    GET_GLOBAL = auto()
+    SET_GLOBAL = auto()
 
 
 @dataclass
@@ -94,6 +97,8 @@ _definitions = {
     Opcode.POP: Definition("OpPop", []),
     Opcode.JUMP_NOT_TRUTHY: Definition("OpJumpNotTruthy", [2]),
     Opcode.JUMP: Definition("OpJump", [2]),
+    Opcode.GET_GLOBAL: Definition("OpGetGlobal", [2]),
+    Opcode.SET_GLOBAL: Definition("OpSetGlobal", [2]),
 }
 
 

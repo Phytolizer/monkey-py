@@ -1,6 +1,5 @@
 from tokens import TokenType, Token
 import tokens
-import pytest
 
 
 def is_letter(ch):

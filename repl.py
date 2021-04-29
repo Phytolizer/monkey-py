@@ -1,9 +1,7 @@
 from monkey_vm import VM
 from monkey_compiler import Compiler
-from environment import Environment
 from lexer import Lexer
 from monkey_parser import Parser
-import evaluator
 
 
 def print_parser_errors(errs):
@@ -19,11 +17,11 @@ if __name__ == "__main__":
             print()
             break
 
-        l = Lexer(line)
-        p = Parser(l)
-        program = p.parse_program()
-        if len(p.errors) > 0:
-            print_parser_errors(p.errors)
+        lex = Lexer(line)
+        par = Parser(lex)
+        program = par.parse_program()
+        if len(par.errors) > 0:
+            print_parser_errors(par.errors)
             continue
         comp = Compiler()
         try:
