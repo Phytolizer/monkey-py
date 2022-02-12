@@ -13,6 +13,6 @@ if __name__ == "__main__":
 
         while True:
             tok = l.next_token()
-            if tok.type == TokenType.Eof:
+            if tok.type == TokenType.EOF:
                 break
             print(f"{{Type:{tok.type} Literal:{tok.literal}}}")

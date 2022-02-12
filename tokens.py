@@ -1,56 +1,60 @@
 from enum import Enum, auto
 
+
 class TokenType(Enum):
-    Illegal = auto()
-    Eof = auto()
+    ILLEGAL = auto()
+    EOF = auto()
 
-    Ident = auto()
-    Num = auto()
+    IDENT = auto()
+    NUM = auto()
 
-    Fn = auto()
-    Let = auto()
-    If = auto()
-    Else = auto()
-    Return = auto()
+    FN = auto()
+    LET = auto()
+    IF = auto()
+    ELSE = auto()
+    RETURN = auto()
     TRUE = auto()
     FALSE = auto()
 
-    Comma = auto()
-    Semicolon = auto()
+    COMMA = auto()
+    SEMICOLON = auto()
 
-    Assign = auto()
-    Plus = auto()
-    Bang = auto()
-    Minus = auto()
-    Star = auto()
-    Slash = auto()
+    ASSIGN = auto()
+    PLUS = auto()
+    BANG = auto()
+    MINUS = auto()
+    STAR = auto()
+    SLASH = auto()
 
-    Less = auto()
-    Greater = auto()
-    Eq = auto()
-    NotEq = auto()
+    LESS = auto()
+    GREATER = auto()
+    EQ = auto()
+    NOTEQ = auto()
 
-    LParen = auto()
-    RParen = auto()
-    LBrace = auto()
-    RBrace = auto()
+    LPAREN = auto()
+    RPAREN = auto()
+    LBRACE = auto()
+    RBRACE = auto()
+
 
 class Token:
     def __init__(self, type, literal):
         self.type = type
         self.literal = literal
 
+
 KEYWORDS = {
-    "fn": TokenType.Fn,
-    "let": TokenType.Let,
-    "if": TokenType.If,
-    "else": TokenType.Else,
-    "return": TokenType.Return,
+    "fn": TokenType.FN,
+    "let": TokenType.LET,
+    "if": TokenType.IF,
+    "else": TokenType.ELSE,
+    "return": TokenType.RETURN,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
 }
 
+
 def lookup_ident(text):
     if text in KEYWORDS:
         return KEYWORDS[text]
-    return TokenType.Ident
+    return TokenType.IDENT
