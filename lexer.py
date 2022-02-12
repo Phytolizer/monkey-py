@@ -1,4 +1,3 @@
-import pytest
 from tokens import TokenType, Token
 import tokens
 
